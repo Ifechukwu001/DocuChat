@@ -1,0 +1,53 @@
+[project]
+name = "docuchat"
+dynamic = ["version"]
+description = "DocuChat"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "argon2-cffi>=25.1.0",
+    "fastapi[standard]>=0.135.3",
+    "pydantic>=2.12.5",
+    "pydantic-settings>=2.13.1",
+    "pyee>=13.0.1",
+    "pyjwt>=2.12.1",
+    "tortoise-orm[asyncpg]>=1.1.7",
+]
+
+[dependency-groups]
+dev = []
+
+[tool.setuptools.dynamic.version]
+attr = "app.__version__"
+
+[tool.ruff]
+fix = true
+exclude = ["*/migrations"]
+
+[tool.ruff.lint]
+extend-select = [
+    "UP",    # pyupgrade
+    "I",     # isort
+    "T20",   # flake8-print
+    "ANN",   # flake8-annotations
+    "ASYNC", # flake8-async
+    "S",     # flake8-bandit
+    "ICN",   # flake8-import-convention
+    "RUF",   # ruff
+    "ERA",   # eradicate
+    "D",     # pydocstyle
+
+]
+ignore = ["D100", "D104"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+case-sensitive = true
+length-sort = true
+
+[tool.tortoise]
+tortoise_orm = "app.orm.config.TORTOISE_CONFIG"
+location = "./app/orm/migrations"
+src_folder = "./."
