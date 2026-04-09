@@ -1,32 +1,74 @@
 from fastapi import Request, APIRouter, status
 
 from app.services import auth as auth_service
+from app.responses.auth import UserResponse, LoginResponse, RefreshResponse
+from app.validators.auth import LoginSchema, RefreshSchema, RegisterSchema
+from app.responses.envelope import (
+    ErrorResponse,
+    SuccessResponse,
+    ValidationErrorResponse,
+)
 
 router = APIRouter()
 
 
-@router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register(request: Request) -> dict[str, str]:
+@router.post(
+    "/register",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[UserResponse],
+    responses={
+        status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ValidationErrorResponse},
+    },
+)
+async def register(details: RegisterSchema) -> dict[str, str]:
     """Register a new user."""
-    return await auth_service.register(**await request.json())
+    return await auth_service.register(email=details.email, password=details.password)
 
 
-@router.post("/login")
-async def login(request: Request) -> dict[str, str | dict[str, str]]:
+@router.post(
+    "/login",
+    status_code=status.HTTP_200_OK,
+    response_model=SuccessResponse[LoginResponse],
+    responses={
+        status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ValidationErrorResponse},
+    },
+)
+async def login(
+    request: Request, details: LoginSchema
+) -> dict[str, str | dict[str, str]]:
     """Login user and return tokens."""
     return await auth_service.login(
-        **await request.json(), device_info=request.headers.get("User-Agent")
+        email=details.email,
+        password=details.password,
+        device_info=request.headers.get("User-Agent"),
     )
 
 
-@router.post("/refresh")
-async def refresh(request: Request) -> dict[str, str | dict[str, str]]:
+@router.post(
+    "/refresh",
+    status_code=status.HTTP_200_OK,
+    response_model=SuccessResponse[RefreshResponse],
+    responses={
+        status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ValidationErrorResponse},
+    },
+)
+async def refresh(details: RefreshSchema) -> dict[str, str | dict[str, str]]:
     """Refresh access token using refresh token."""
-    return await auth_service.refresh((await request.json())["refresh_token"])
+    return await auth_service.refresh(details.refresh_token)
 
 
-@router.post("/logout")
-async def logout(request: Request) -> dict[str, str]:
+@router.post(
+    "/logout",
+    status_code=status.HTTP_200_OK,
+    response_model=SuccessResponse[None],
+    responses={
+        status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ValidationErrorResponse},
+    },
+)
+async def logout(details: RefreshSchema) -> dict[str, str]:
     """Logout user by invalidating their refresh tokens."""
-    await auth_service.logout((await request.json())["refresh_token"])
-    return {"message": "Logged out"}
+    return await auth_service.logout(details.refresh_token)

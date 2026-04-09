@@ -14,10 +14,8 @@ async def api_error_response_handler(
     """Exception handler for API Error responses."""
     return JSONResponse(
         {
-            "status": "failure",
-            "status_code": exc.status,
+            "success": False,
             "message": exc.message,
-            "errors": exc.errors,
         },
         status_code=exc.status,
     )
@@ -30,10 +28,8 @@ async def http_error_response_handler(
     """Exception handler for Default HTTP Error responses."""
     return JSONResponse(
         {
-            "status": "failure",
-            "status_code": exc.status_code,
+            "success": False,
             "message": exc.detail,
-            "errors": None,
         },
         status_code=exc.status_code,
     )
@@ -52,8 +48,7 @@ async def validation_error_response_handler(
     return JSONResponse(
         jsonable_encoder(
             {
-                "status": "failure",
-                "status_code": status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "success": False,
                 "message": "Validation Errors",
                 "errors": errors,
             }

@@ -1,9 +1,7 @@
 import json
 from enum import StrEnum
 from typing import Any
-from datetime import datetime
-
-from iso8601 import UTC
+from datetime import UTC, datetime
 
 from app.lib.events import APP_EVENTS
 from app.orm.models import User, UsageLog, Conversation
