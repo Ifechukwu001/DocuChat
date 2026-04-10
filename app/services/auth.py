@@ -28,7 +28,6 @@ async def register(email: str, password: str) -> dict[str, Any]:
     APP_EVENTS.emit(AuthEvents.USER_REGISTERED, user)
 
     return success_response(
-        HTTPStatus.CREATED,
         "User registered successfully",
         {"id": user.id.hex, "email": user.email, "tier": user.tier},
     )
@@ -68,7 +67,6 @@ async def login(
     )
 
     return success_response(
-        HTTPStatus.OK,
         "User logged in successfully",
         {
             "access_token": access_token,
@@ -115,7 +113,6 @@ async def refresh(raw_refresh_token: str) -> dict[str, Any]:
     )
 
     return success_response(
-        HTTPStatus.OK,
         "Access token refreshed successfully",
         {"access_token": new_access_token, "refresh_token": new_refresh_token},
     )
@@ -126,7 +123,4 @@ async def logout(raw_refresh_token: str) -> dict[str, Any]:
     token_hash = hashlib.sha256(raw_refresh_token.encode()).hexdigest()
     await RefreshToken.filter(token=token_hash).delete()
 
-    return success_response(
-        HTTPStatus.OK,
-        "Logged out",
-    )
+    return success_response("Logged out")
