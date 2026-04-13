@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = []
+dev = ["coverage>=7.13.5", "pytest>=9.0.3"]
 
 [tool.setuptools.dynamic.version]
 attr = "app.__version__"
@@ -39,13 +39,30 @@ extend-select = [
 
 ]
 ignore = ["D100", "D104"]
-
+dev = ["coverage>=7.13.5", "pytest>=9.0.3"]
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+omit = ["*/migrations/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 0
 [tool.ruff.lint.isort]
 case-sensitive = true
 length-sort = true
+
+
+[tool.ruff.lint.extend-per-file-ignores]
+"tests/*" = ["S101"]
+
 
 [tool.tortoise]
 tortoise_orm = "app.orm.config.TORTOISE_CONFIG"
