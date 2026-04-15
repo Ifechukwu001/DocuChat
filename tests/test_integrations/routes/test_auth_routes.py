@@ -1,8 +1,11 @@
 import pytest
+from httpx import AsyncClient
 
 
 @pytest.mark.anyio
-async def test_auth_register_login_refresh_logout_flow(async_client) -> None:
+async def test_auth_register_login_refresh_logout_flow(
+    async_client: AsyncClient,
+) -> None:
     register_payload = {
         "email": "routeuser@example.com",
         "password": "StrongPass1",
@@ -60,7 +63,7 @@ async def test_auth_register_login_refresh_logout_flow(async_client) -> None:
 
 
 @pytest.mark.anyio
-async def test_auth_register_validation_error(async_client) -> None:
+async def test_auth_register_validation_error(async_client: AsyncClient) -> None:
     response = await async_client.post(
         "/api/v1/auth/register",
         json={"email": "invalid-email", "password": "weak"},

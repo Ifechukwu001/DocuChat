@@ -18,7 +18,7 @@ router = APIRouter()
     response_model=SuccessResponse[UserResponse],
     responses={
         status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse},
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ValidationErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ValidationErrorResponse},
     },
 )
 async def register(details: RegisterSchema) -> dict[str, str]:
@@ -32,7 +32,7 @@ async def register(details: RegisterSchema) -> dict[str, str]:
     response_model=SuccessResponse[LoginResponse],
     responses={
         status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse},
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ValidationErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ValidationErrorResponse},
     },
 )
 async def login(
@@ -52,7 +52,7 @@ async def login(
     response_model=SuccessResponse[RefreshResponse],
     responses={
         status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse},
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ValidationErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ValidationErrorResponse},
     },
 )
 async def refresh(details: RefreshSchema) -> dict[str, str | dict[str, str]]:
@@ -66,7 +66,7 @@ async def refresh(details: RefreshSchema) -> dict[str, str | dict[str, str]]:
     response_model=SuccessResponse[None],
     responses={
         status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse},
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ValidationErrorResponse},
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"model": ValidationErrorResponse},
     },
 )
 async def logout(details: RefreshSchema) -> dict[str, str]:

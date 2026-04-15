@@ -53,5 +53,5 @@ async def validation_error_response_handler(
                 "errors": errors,
             }
         ),
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
     )

@@ -6,6 +6,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from tortoise import Tortoise
 
+from app.env import settings
 from app.main import application
 
 
@@ -35,3 +36,20 @@ async def async_client(db_connection: None) -> AsyncGenerator[AsyncClient]:
         base_url="http://testserver",
     ) as client:
         yield client
+
+
+@pytest.fixture(autouse=True)
+def mock_settings(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Fixture to mock settings for tests."""
+
+    monkeypatch.setattr(
+        settings,
+        "JWT_ACCESS_SECRET",
+        "random-access-secret-that-is-long-enough",
+    )
+
+    monkeypatch.setattr(
+        settings,
+        "JWT_REFRESH_SECRET",
+        "random-refresh-secret-that-is-long-enough",
+    )

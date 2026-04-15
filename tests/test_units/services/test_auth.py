@@ -24,11 +24,14 @@ async def test_register_success(monkeypatch: pytest.MonkeyPatch) -> None:
         captured["created_password_hash"] = password_hash
         return SimpleNamespace(id=user_id, email=email, tier="free")
 
+    def fake_password_hash(password: str) -> str:
+        return "hashed-secret"
+
     def fake_emit(event: str, payload: object) -> None:
         emitted.append((event, payload))
 
     monkeypatch.setattr(auth.User, "exists", fake_exists)
-    monkeypatch.setattr(auth, "hash_password", lambda _: "hashed-secret")
+    monkeypatch.setattr(auth, "hash_password", fake_password_hash)
     monkeypatch.setattr(auth.User, "create", fake_create)
     monkeypatch.setattr(auth.APP_EVENTS, "emit", fake_emit)
 
@@ -97,8 +100,11 @@ async def test_login_rejects_invalid_password(monkeypatch: pytest.MonkeyPatch) -
     async def fake_get_or_none(**_: str) -> SimpleNamespace:
         return user
 
+    def fake_verify_password(*_: str) -> bool:
+        return False
+
     monkeypatch.setattr(auth.User, "get_or_none", fake_get_or_none)
-    monkeypatch.setattr(auth, "verify_password", lambda *_: False)
+    monkeypatch.setattr(auth, "verify_password", fake_verify_password)
 
     with pytest.raises(ErrorResponse) as exc:
         await auth.login("user@example.com", "wrong-password")
@@ -121,15 +127,27 @@ async def test_login_success(monkeypatch: pytest.MonkeyPatch) -> None:
     async def fake_get_or_none(**_: str) -> SimpleNamespace:
         return user
 
+    def fake_verify_password(*_: str) -> bool:
+        return True
+
+    def fake_generate_access_token(*_: str) -> str:
+        return "access-token"
+
+    def fake_generate_refresh_token(*_: str) -> str:
+        return "refresh-token"
+
     async def fake_create(**kwargs: object) -> None:
         captured["refresh_create"] = kwargs
 
+    def fake_emit(*_: object) -> None:
+        pass
+
     monkeypatch.setattr(auth.User, "get_or_none", fake_get_or_none)
-    monkeypatch.setattr(auth, "verify_password", lambda *_: True)
-    monkeypatch.setattr(auth, "generate_access_token", lambda *_: "access-token")
-    monkeypatch.setattr(auth, "generate_refresh_token", lambda *_: "refresh-token")
+    monkeypatch.setattr(auth, "verify_password", fake_verify_password)
+    monkeypatch.setattr(auth, "generate_access_token", fake_generate_access_token)
+    monkeypatch.setattr(auth, "generate_refresh_token", fake_generate_refresh_token)
     monkeypatch.setattr(auth.RefreshToken, "create", fake_create)
-    monkeypatch.setattr(auth.APP_EVENTS, "emit", lambda *_: None)
+    monkeypatch.setattr(auth.APP_EVENTS, "emit", fake_emit)
 
     response = await auth.login("user@example.com", "StrongPass1")
 
@@ -145,11 +163,11 @@ async def test_login_success(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.anyio
 async def test_refresh_rejects_invalid_token(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        auth,
-        "verify_refresh_token",
-        lambda _: (_ for _ in ()).throw(ValueError("bad token")),
-    )
+
+    def fake_verify_refresh_token(_: str) -> dict[str, str]:
+        raise ValueError("bad token")
+
+    monkeypatch.setattr(auth, "verify_refresh_token", fake_verify_refresh_token)
 
     with pytest.raises(ErrorResponse) as exc:
         await auth.refresh("invalid-token")
@@ -162,11 +180,10 @@ async def test_refresh_rejects_invalid_token(monkeypatch: pytest.MonkeyPatch) ->
 async def test_refresh_rejects_non_refresh_type(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(
-        auth,
-        "verify_refresh_token",
-        lambda _: {"sub": str(uuid4()), "type": "access", "role": "free"},
-    )
+    def fake_verify_refresh_token(_: str) -> dict[str, str]:
+        return {"sub": str(uuid4()), "type": "access", "role": "free"}
+
+    monkeypatch.setattr(auth, "verify_refresh_token", fake_verify_refresh_token)
 
     with pytest.raises(ErrorResponse) as exc:
         await auth.refresh("token")
@@ -179,12 +196,10 @@ async def test_refresh_rejects_non_refresh_type(
 async def test_refresh_rejects_expired_or_revoked(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    user_id = uuid4()
-    monkeypatch.setattr(
-        auth,
-        "verify_refresh_token",
-        lambda _: {"sub": str(user_id), "type": "refresh", "role": "free"},
-    )
+    def fake_verify_refresh_token(_: str) -> dict[str, str]:
+        return {"sub": str(uuid4()), "type": "refresh", "role": "free"}
+
+    monkeypatch.setattr(auth, "verify_refresh_token", fake_verify_refresh_token)
 
     async def fake_get_or_none(**_: str) -> None:
         return None
@@ -213,11 +228,10 @@ async def test_refresh_success(monkeypatch: pytest.MonkeyPatch) -> None:
         id=user_id, email="user@example.com", tier="free", is_active=True
     )
 
-    monkeypatch.setattr(
-        auth,
-        "verify_refresh_token",
-        lambda _: {"sub": str(user_id), "type": "refresh", "role": "free"},
-    )
+    def fake_verify_refresh_token(_: str) -> dict[str, str]:
+        return {"sub": str(user_id), "type": "refresh", "role": "free"}
+
+    monkeypatch.setattr(auth, "verify_refresh_token", fake_verify_refresh_token)
 
     async def fake_get_token(**_: str) -> StoredToken:
         return StoredToken()
@@ -225,13 +239,19 @@ async def test_refresh_success(monkeypatch: pytest.MonkeyPatch) -> None:
     async def fake_get_user(**_: object) -> SimpleNamespace:
         return user
 
+    def fake_generate_access_token(*_: str) -> str:
+        return "new-access"
+
+    def fake_generate_refresh_token(*_: str) -> str:
+        return "new-refresh"
+
     async def fake_create(**kwargs: object) -> None:
         captured["created"] = kwargs
 
     monkeypatch.setattr(auth.RefreshToken, "get_or_none", fake_get_token)
     monkeypatch.setattr(auth.User, "get_or_none", fake_get_user)
-    monkeypatch.setattr(auth, "generate_access_token", lambda *_: "new-access")
-    monkeypatch.setattr(auth, "generate_refresh_token", lambda *_: "new-refresh")
+    monkeypatch.setattr(auth, "generate_access_token", fake_generate_access_token)
+    monkeypatch.setattr(auth, "generate_refresh_token", fake_generate_refresh_token)
     monkeypatch.setattr(auth.RefreshToken, "create", fake_create)
 
     response = await auth.refresh("old-refresh")
