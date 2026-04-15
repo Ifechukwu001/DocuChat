@@ -3,13 +3,13 @@ from typing import Annotated
 
 from fastapi import Query, Depends, APIRouter
 
-from app.middleware.auth import authenticate
+from app.middleware.authorize import require_permission
 from app.validators.document import ListDocumentsSchema, CreateDocumentSchema
 
-router = APIRouter(dependencies=[Depends(authenticate)])
+router = APIRouter()
 
 
-@router.get("")
+@router.get("", dependencies=[Depends(require_permission("documents:read"))])
 async def list_documents(
     filter: Annotated[ListDocumentsSchema, Query()],
 ) -> dict[str, object]:
@@ -17,19 +17,22 @@ async def list_documents(
     return {}
 
 
-@router.post("")
+@router.post("", dependencies=[Depends(require_permission("documents:create"))])
 async def create_document(details: CreateDocumentSchema) -> dict[str, object]:
     """Create a new document."""
     return {}
 
 
-@router.get("/{id}")
+@router.get("/{id}", dependencies=[Depends(require_permission("documents:read"))])
 async def get_document(id: UUID) -> dict[str, object]:
     """Get document details."""
     return {}
 
 
-@router.delete("/{id}")
+@router.delete(
+    "/{id}",
+    dependencies=[Depends(require_permission("documents:delete"))],
+)
 async def delete_document(id: UUID) -> dict[str, object]:
     """Delete a document."""
     return {}

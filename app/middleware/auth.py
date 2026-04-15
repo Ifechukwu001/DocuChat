@@ -1,4 +1,5 @@
-from typing import Annotated, TypedDict
+from typing import Annotated
+from uuid import UUID
 
 from jwt import ExpiredSignatureError
 from fastapi import Depends, status
@@ -11,18 +12,11 @@ from app.lib.tokens import verify_access_token
 from app.lib.exceptions import ErrorResponse
 
 Authorization = Annotated[
-    HTTPAuthorizationCredentials, Depends(HTTPBearer(auto_error=False))
+    HTTPAuthorizationCredentials | None, Depends(HTTPBearer(auto_error=False))
 ]
 
 
-class UserInfo(TypedDict):
-    """User Auth Info TypedDict."""
-
-    id: str
-    role: str
-
-
-async def authenticate(auth: Authorization) -> UserInfo:
+async def authenticate(auth: Authorization) -> UUID:
     """Authenticate request."""
     if not auth:
         raise ErrorResponse(status.HTTP_401_UNAUTHORIZED, "No token provided")
@@ -32,7 +26,7 @@ async def authenticate(auth: Authorization) -> UserInfo:
         if payload.get("type") != "access":
             raise ErrorResponse(status.HTTP_401_UNAUTHORIZED, "Invalid token type")
 
-        return {"id": str(payload.get("sub")), "role": str(payload.get("role"))}
+        return UUID(str(payload.get("sub")))
 
     except ErrorResponse:
         raise

@@ -10,9 +10,9 @@ from app.lib.tokens import (
     generate_access_token,
     generate_refresh_token,
 )
-from app.orm.models import User, RefreshToken
+from app.orm.models import User, RefreshToken, Role, UserRole
 from app.lib.password import hash_password, verify_password
-from app.events.auth_events import AuthEvents
+from app.events.auth import AuthEvents
 from app.lib.response_formatter import error_response, success_response
 
 
@@ -24,6 +24,11 @@ async def register(email: str, password: str) -> dict[str, Any]:
 
     password_hash = hash_password(password)
     user = await User.create(email=email.lower(), password_hash=password_hash)
+
+    # Assign default role to the new user
+    default_role = await Role.filter(is_default=True).first()
+    if default_role:
+        await UserRole.create(user=user, role=default_role)
 
     APP_EVENTS.emit(AuthEvents.USER_REGISTERED, user)
 

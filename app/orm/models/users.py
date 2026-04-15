@@ -37,3 +37,69 @@ class RefreshToken(models.Model):
         """Refresh Token Meta."""
 
         indexes = ("expires_at",)
+
+
+class Role(models.Model):
+    """Role Model."""
+
+    id: UUID = fields.UUIDField(primary_key=True)
+    name: str = fields.CharField(max_length=50, unique=True)
+    description: str = fields.CharField(max_length=255, null=True)
+    is_default: bool = fields.BooleanField(default=False)
+    created_at: datetime = fields.DatetimeField(auto_now_add=True)
+    updated_at: datetime = fields.DatetimeField(auto_now=True)
+
+    users: fields.ReverseRelation["UserRole"]
+    permissions: fields.ReverseRelation["RolePermission"]
+
+
+class Permission(models.Model):
+    """Permission Model."""
+
+    id: UUID = fields.UUIDField(primary_key=True)
+    name: str = fields.CharField(max_length=50, unique=True)  # 'documents:create'
+    description: str = fields.CharField(max_length=255, null=True)
+    resource: str = fields.CharField(max_length=255, null=True)  # 'documents'
+    action: str = fields.CharField(max_length=50, null=True)  # 'create'
+    created_at: datetime = fields.DatetimeField(auto_now_add=True)
+
+    class Meta(models.Model.Meta):
+        """Permission Meta."""
+
+        unique_together = (("resource", "action"),)
+
+
+class UserRole(models.Model):
+    """User Role Model."""
+
+    user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+        "main.User", related_name="roles", on_delete=fields.CASCADE
+    )
+    role: fields.ForeignKeyRelation[Role] = fields.ForeignKeyField(
+        "main.Role", related_name="users", on_delete=fields.CASCADE
+    )
+    assigned_at: datetime = fields.DatetimeField(auto_now_add=True)
+    assigned_by: UUID = fields.UUIDField(
+        null=True
+    )  # Who assigned this role (for audit)
+
+    class Meta(models.Model.Meta):
+        """User Role Meta."""
+
+        unique_together = (("user", "role"),)
+
+
+class RolePermission(models.Model):
+    """Role Permission Model."""
+
+    role: fields.ForeignKeyRelation[Role] = fields.ForeignKeyField(
+        "main.Role", related_name="permissions", on_delete=fields.CASCADE
+    )
+    permission: fields.ForeignKeyRelation[Permission] = fields.ForeignKeyField(
+        "main.Permission", related_name="roles", on_delete=fields.CASCADE
+    )
+
+    class Meta(models.Model.Meta):
+        """Role Permission Meta."""
+
+        unique_together = (("role", "permission"),)

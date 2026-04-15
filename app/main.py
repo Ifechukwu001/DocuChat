@@ -5,7 +5,7 @@ from collections.abc import AsyncIterator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-import app.events.auth_events  # type: ignore  # noqa: F401
+import app.events  # type: ignore  # noqa: F401
 from app import __version__, __description__, __display_name__
 from app.env import settings
 from app.routes import router as api_router
