@@ -20,6 +20,10 @@ class Conversation(models.Model):
     created_at: datetime = fields.DatetimeField(auto_now_add=True)
     updated_at: datetime = fields.DatetimeField(auto_now=True)
 
+    latest_message: fields.ForeignKeyNullableRelation["Message"] = (
+        fields.ForeignKeyField("main.Message", on_delete=fields.SET_NULL, null=True)
+    )
+
 
 class Message(models.Model):
     """Message Model."""

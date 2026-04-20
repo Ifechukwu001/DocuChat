@@ -26,10 +26,8 @@ class ValidationErrorResponse(BaseModel):
 
 class _PaginationMetadata(BaseModel):
     page: int
-    pages: int
     limit: int
     total: int
-    count: int
 
 
 class PaginatedSuccessResponse[T](BaseModel):

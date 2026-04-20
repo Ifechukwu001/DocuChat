@@ -27,6 +27,11 @@ class Document(models.Model):
     created_at: datetime = fields.DatetimeField(auto_now_add=True)
     updated_at: datetime = fields.DatetimeField(auto_now=True)
 
+    deleted_at: datetime | None = fields.DatetimeField(
+        null=True  # null = active, timestamp = soft-deleted
+    )
+    deleted_by: UUID | None = fields.UUIDField(null=True)  # Who deleted it (for audit)
+
     class Meta(models.Model.Meta):
         """Document Meta."""
 

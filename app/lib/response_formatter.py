@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, TypedDict
 
 from app.lib.exceptions import ErrorResponse
 
@@ -11,6 +11,26 @@ def success_response(
     return {
         "success": True,
         "message": message,
+        "data": data,
+    }
+
+
+class PaginationMetadata(TypedDict):
+    page: int
+    limit: int
+    total: int
+
+
+def paginated_success_response(
+    message: str,
+    metadata: PaginationMetadata,
+    data: Any = None,  # noqa: ANN401
+) -> dict[str, Any]:
+    """Returns a response for success responses."""
+    return {
+        "success": True,
+        "message": message,
+        "metadata": metadata,
         "data": data,
     }
 
