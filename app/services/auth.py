@@ -34,7 +34,7 @@ async def register(email: str, password: str) -> dict[str, Any]:
 
     return success_response(
         "User registered successfully",
-        {"id": user.id.hex, "email": user.email, "tier": user.tier},
+        {"id": user.id, "email": user.email, "tier": user.tier},
     )
 
 
@@ -76,7 +76,7 @@ async def login(
         {
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "user": {"id": user.id.hex, "email": user.email, "tier": user.tier},
+            "user": {"id": user.id, "email": user.email, "tier": user.tier},
         },
     )
 

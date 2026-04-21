@@ -5,8 +5,14 @@ from uuid import UUID
 
 from tortoise.expressions import Q
 
-from app.lib.response_formatter import error_response, paginated_success_response
+from app.lib.events import APP_EVENTS
+from app.lib.response_formatter import (
+    error_response,
+    paginated_success_response,
+    success_response,
+)
 from app.orm.models import Document
+from app.queues.jobs import queue_document_for_processing, document_queue
 from app.validators.document import ListDocumentsSchema
 
 
@@ -54,7 +60,7 @@ async def list_documents(user_id: UUID, options: ListDocumentsSchema) -> dict[st
         },
         data=[
             {
-                "id": doc.id.hex,
+                "id": doc.id,
                 "title": doc.title,
                 "status": doc.status,
                 "filename": doc.filename,
@@ -64,6 +70,77 @@ async def list_documents(user_id: UUID, options: ListDocumentsSchema) -> dict[st
             }
             for doc in documents
         ],
+    )
+
+
+async def get_document(document_id: UUID, user_id: UUID) -> dict[str, Any]:
+    """Get document details."""
+    document = await Document.get_or_none(
+        id=document_id, user_id=user_id, deleted_at=None
+    ).only(
+        "id",
+        "title",
+        "filename",
+        "status",
+        "chunk_count",
+        "created_at",
+        "updated_at",
+    )
+
+    if not document:
+        return error_response(404, "Document not found")
+
+    return success_response(
+        message="Document retrieved successfully",
+        data={
+            "id": document.id,
+            "title": document.title,
+            "status": document.status,
+            "filename": document.filename,
+            "chunk_count": document.chunk_count,
+            "created_at": document.created_at,
+            "updated_at": document.updated_at,
+        },
+    )
+
+
+async def create_document(title: str, content: str, user_id: UUID) -> dict[str, Any]:
+    """Create a new document."""
+    document = await Document.create(
+        title=title,
+        content=content,
+        filename="-".join(title.lower().split()),
+        user_id=user_id,
+        status="pending",
+    )
+
+    job_id = await queue_document_for_processing(
+        document_id=document.id.hex, user_id=user_id.hex
+    )
+
+    APP_EVENTS.emit(
+        "doc:created",
+        {
+            "document_id": document.id.hex,
+            "user_id": user_id.hex,
+            "title": document.title,
+        },
+    )
+
+    return success_response(
+        message="Document created successfully",
+        data={
+            "document": {
+                "id": document.id,
+                "title": document.title,
+                "status": document.status,
+                "filename": document.filename,
+                "chunk_count": document.chunk_count,
+                "created_at": document.created_at,
+                "updated_at": document.updated_at,
+            },
+            "job_id": job_id,
+        },
     )
 
 
@@ -78,41 +155,31 @@ async def delete_document(document_id: UUID, user_id: UUID) -> dict[str, Any]:
     document.deleted_by = user_id
     await document.save()
 
-    return paginated_success_response(
-        message="Document deleted successfully",
-        metadata={
-            "page": 1,
-            "limit": 1,
-            "total": 1,
-        },
-        data=[
-            {
-                "id": document.id.hex,
-                "title": document.title,
-                "status": document.status,
-                "filename": document.filename,
-                "chunk_count": document.chunk_count,
-                "created_at": document.created_at,
-                "updated_at": document.updated_at,
-            }
-        ],
+    return success_response(message="Document deleted successfully")
+
+
+async def get_processing_status(document_id: UUID, user_id: UUID) -> dict[str, Any]:
+    """Get the processing status of a document."""
+    document = await Document.get_or_none(id=document_id, user_id=user_id).only(
+        "id", "user_id", "status", "error"
     )
 
+    if not document:
+        return error_response(404, "Document not found")
 
-"""
-// In document.service.ts createDocument:
-appEvents.emit(DOC_EVENTS.CREATED, {
-  userId: user.id,
-  documentId: doc.id,
-  title: doc.title,
-  fileSizeBytes: doc.fileSizeBytes,
-});
+    jobs = await document_queue.getJobs(["active", "waiting"])  # pyright: ignore[reportUnknownMemberType]
+    active_job = None
 
-// In document.service.ts deleteDocument:
-appEvents.emit(DOC_EVENTS.DELETED, {
-  deletedBy: userId,
-  documentId: doc.id,
-  title: doc.title,
-});
+    for job in jobs:
+        if job and job.data.get("document_id") == document_id.hex:  # type: ignore
+            active_job = job
+            break
 
-"""
+    return success_response(
+        message="Document processing status retrieved successfully",
+        data={
+            "status": document.status,
+            "error": document.error,
+            "progress": active_job.progress if active_job else None,  # type: ignore
+        },
+    )

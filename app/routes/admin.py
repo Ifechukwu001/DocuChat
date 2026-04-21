@@ -39,7 +39,7 @@ async def list_roles() -> dict[str, object]:
     )
 
 
-@router.post("/users/{user_id}}/roles")
+@router.post("/users/{user_id}/roles")
 async def assign_user_roles(
     user_id: UUID,
     role_name: Annotated[str, Body(embed=True)],
@@ -61,13 +61,17 @@ async def assign_user_roles(
 
     APP_EVENTS.emit(
         "admin:role_assigned",
-        {"assigned_by": admin_id, "target_user_id": user_id, "role_name": role_name},
+        {
+            "assigned_by": admin_id.hex,
+            "target_user_id": user_id.hex,
+            "role_name": role_name,
+        },
     )
 
     return success_response(f"Role {role_name} assigned to user")
 
 
-@router.delete("/users/{user_id}}/roles/{role_name}")
+@router.delete("/users/{user_id}/roles/{role_name}")
 async def remove_user_role(
     user_id: UUID,
     role_name: str,
@@ -82,7 +86,11 @@ async def remove_user_role(
 
     APP_EVENTS.emit(
         "admin:role_revoked",
-        {"revoked_by": admin_id, "target_user_id": user_id, "role_name": role_name},
+        {
+            "revoked_by": admin_id.hex,
+            "target_user_id": user_id.hex,
+            "role_name": role_name,
+        },
     )
 
     return success_response(f"Role {role_name} revoked")

@@ -1,10 +1,12 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 
 
 class UserResponse(BaseModel):
     """User Response."""
 
-    id: str
+    id: UUID
     email: str
     tier: str
 

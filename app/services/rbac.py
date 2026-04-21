@@ -8,7 +8,7 @@ async def get_user_permissions(user_id: UUID) -> set[str]:
 
     user_roles = (
         await UserRole.filter(user_id=user_id)
-        .prefetch_related("role__permissions")
+        .prefetch_related("role__permissions__permission")
         .all()
     )
     permissions: set[str] = set()

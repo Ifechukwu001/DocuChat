@@ -37,12 +37,12 @@ async def list_conversations(user_id: UUID, page: int, limit: int) -> dict[str, 
         },
         data=[
             {
-                "id": conv.id.hex,
+                "id": conv.id,
                 "title": conv.title,
                 "updated_at": conv.updated_at,
                 "message_count": conv.message_count,
                 "latest_message": {
-                    "id": conv.latest_message.id.hex,
+                    "id": conv.latest_message.id,
                     "role": conv.latest_message.role,
                     "content": conv.latest_message.content,
                     "created_at": conv.latest_message.created_at,
@@ -100,14 +100,14 @@ async def send_message(
         return success_response(
             message="Message sent successfully",
             data={
-                "conversation_id": conversation.id.hex,
+                "conversation_id": conversation.id,
                 "user_message": {
-                    "id": user_message.id.hex,
+                    "id": user_message.id,
                     "content": user_message.content,
                     "created_at": user_message.created_at,
                 },
                 "assistant_message": {
-                    "id": assistant_message.id.hex,
+                    "id": assistant_message.id,
                     "content": assistant_message.content,
                     "created_at": assistant_message.created_at,
                 },

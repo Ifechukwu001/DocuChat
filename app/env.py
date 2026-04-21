@@ -16,6 +16,8 @@ class EnvSettings(BaseSettings):
 
     DB_URL: PostgresDsn | str = ""
 
+    REDIS_URL: str = ""
+
     JWT_ACCESS_SECRET: str = ""
     JWT_REFRESH_SECRET: str = ""
 
