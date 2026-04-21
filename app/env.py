@@ -21,5 +21,9 @@ class EnvSettings(BaseSettings):
     JWT_ACCESS_SECRET: str = ""
     JWT_REFRESH_SECRET: str = ""
 
+    OPENAI_API_KEY: str = ""
+
+    EXAMPLE_WEBHOOK_SECRET: str = ""
+
 
 settings = EnvSettings()

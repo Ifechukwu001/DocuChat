@@ -3,8 +3,8 @@ from typing import Annotated
 
 from fastapi import Depends, APIRouter
 
-from app.middleware.auth import authenticate
 from app.services import conversation as conversation_service
+from app.middleware.auth import authenticate
 from app.validators.conversation import SendMessageSchema, CreateConversationSchema
 
 router = APIRouter(dependencies=[Depends(authenticate)])

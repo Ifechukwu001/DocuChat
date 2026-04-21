@@ -1,21 +1,20 @@
 import asyncio
-from typing import Any
 from uuid import UUID
+from typing import Any
 
 from tortoise import transactions
 from tortoise.functions import Count
 
+from app.orm.models import Message, Document, UsageLog, Conversation
 from app.lib.response_formatter import (
     error_response,
-    paginated_success_response,
     success_response,
+    paginated_success_response,
 )
-from app.orm.models import Conversation, Document, Message, UsageLog
 
 
 async def list_conversations(user_id: UUID, page: int, limit: int) -> dict[str, Any]:
     """List conversations for a user."""
-
     conversations, total = asyncio.gather(
         Conversation.filter(user_id=user_id)
         .order_by("-updated_at")

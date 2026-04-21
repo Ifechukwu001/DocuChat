@@ -3,7 +3,7 @@ from typing import Any
 from tortoise import Tortoise, run_async  # type: ignore
 
 from app.orm.config import TORTOISE_CONFIG
-from app.orm.models import Permission, Role, RolePermission
+from app.orm.models import Role, Permission, RolePermission
 
 
 async def main() -> None:

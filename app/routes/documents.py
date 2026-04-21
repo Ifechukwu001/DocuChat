@@ -5,8 +5,8 @@ from fastapi import Query, Depends, APIRouter, status
 
 from app.services import document as document_service
 from app.middleware.auth import authenticate
-from app.middleware.authorize import require_permission
 from app.validators.document import ListDocumentsSchema, CreateDocumentSchema
+from app.middleware.authorize import require_permission
 
 router = APIRouter()
 

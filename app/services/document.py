@@ -1,24 +1,23 @@
 import asyncio
-from datetime import UTC, datetime
-from typing import Any
 from uuid import UUID
+from typing import Any
+from datetime import UTC, datetime
 
 from tortoise.expressions import Q
 
 from app.lib.events import APP_EVENTS
+from app.orm.models import Document
+from app.queues.jobs import document_queue, queue_document_for_processing
+from app.validators.document import ListDocumentsSchema
 from app.lib.response_formatter import (
     error_response,
-    paginated_success_response,
     success_response,
+    paginated_success_response,
 )
-from app.orm.models import Document
-from app.queues.jobs import queue_document_for_processing, document_queue
-from app.validators.document import ListDocumentsSchema
 
 
 async def list_documents(user_id: UUID, options: ListDocumentsSchema) -> dict[str, Any]:
     """List documents for a user."""
-
     query = Document.filter(user_id=user_id, deleted_at=None)
 
     if options.status:

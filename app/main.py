@@ -14,7 +14,7 @@ from app.orm.config import register_orm
 @asynccontextmanager
 async def _lifespan(api: FastAPI) -> AsyncIterator[None]:
     async with AsyncExitStack() as stack:
-        import app.events  # type: ignore  # noqa: F401
+        import app.events  # type: ignore
         import app.queues  # type: ignore  # noqa: F401
 
         await stack.enter_async_context(register_orm(api))

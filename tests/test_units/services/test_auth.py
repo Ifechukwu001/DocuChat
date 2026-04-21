@@ -1,12 +1,12 @@
-from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from types import SimpleNamespace
 from uuid import uuid4
+from types import SimpleNamespace
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from app.lib.exceptions import ErrorResponse
 from app.services import auth
+from app.lib.exceptions import ErrorResponse
 
 
 @pytest.mark.anyio

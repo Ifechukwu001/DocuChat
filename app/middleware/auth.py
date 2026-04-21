@@ -1,5 +1,5 @@
-from typing import Annotated
 from uuid import UUID
+from typing import Annotated
 
 from jwt import ExpiredSignatureError
 from fastapi import Depends, status

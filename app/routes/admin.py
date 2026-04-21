@@ -5,10 +5,10 @@ from fastapi import Body, Depends, APIRouter
 from tortoise.functions import Count
 
 from app.lib.events import APP_EVENTS
-from app.lib.response_formatter import error_response, success_response
+from app.orm.models import Role, User, UserRole
 from app.middleware.auth import authenticate
 from app.middleware.authorize import require_permission
-from app.orm.models import Role, User, UserRole
+from app.lib.response_formatter import error_response, success_response
 
 router = APIRouter(dependencies=[Depends(require_permission("roles:manage"))])
 
@@ -16,7 +16,6 @@ router = APIRouter(dependencies=[Depends(require_permission("roles:manage"))])
 @router.get("/roles")
 async def list_roles() -> dict[str, object]:
     """List roles."""
-
     roles = (
         await Role.annotate(users_count=Count("users"))
         .prefetch_related("permissions__permission")
@@ -46,7 +45,6 @@ async def assign_user_roles(
     admin_id: Annotated[UUID, Depends(authenticate)],
 ) -> dict[str, object]:
     """Assign a role to a user."""
-
     user = await User.get_or_none(id=user_id)
     if not user:
         return error_response(404, "User not found")

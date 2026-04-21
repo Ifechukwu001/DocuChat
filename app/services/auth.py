@@ -10,9 +10,9 @@ from app.lib.tokens import (
     generate_access_token,
     generate_refresh_token,
 )
-from app.orm.models import User, RefreshToken, Role, UserRole
-from app.lib.password import hash_password, verify_password
+from app.orm.models import Role, User, UserRole, RefreshToken
 from app.events.auth import AuthEvents
+from app.lib.password import hash_password, verify_password
 from app.lib.response_formatter import error_response, success_response
 
 

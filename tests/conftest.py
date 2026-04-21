@@ -3,7 +3,7 @@
 from collections.abc import AsyncGenerator
 
 import pytest
-from httpx import ASGITransport, AsyncClient
+from httpx import AsyncClient, ASGITransport
 from tortoise import Tortoise
 
 from app.env import settings
@@ -41,7 +41,6 @@ async def async_client(db_connection: None) -> AsyncGenerator[AsyncClient]:
 @pytest.fixture(autouse=True)
 def mock_settings(monkeypatch: pytest.MonkeyPatch) -> None:
     """Fixture to mock settings for tests."""
-
     monkeypatch.setattr(
         settings,
         "JWT_ACCESS_SECRET",

@@ -49,8 +49,8 @@ class Role(models.Model):
     created_at: datetime = fields.DatetimeField(auto_now_add=True)
     updated_at: datetime = fields.DatetimeField(auto_now=True)
 
-    users: fields.ReverseRelation["UserRole"]
-    permissions: fields.ReverseRelation["RolePermission"]
+    users: fields.ReverseRelation[UserRole]
+    permissions: fields.ReverseRelation[RolePermission]
 
 
 class Permission(models.Model):

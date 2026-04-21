@@ -1,22 +1,20 @@
-# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false
+# pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportArgumentType=false
 import asyncio
-from datetime import UTC, datetime
 from uuid import UUID
+from datetime import UTC, datetime
 
-from bullmq import Worker, Job  # type: ignore
-
+from bullmq import Job, Worker  # type: ignore
 from tortoise import transactions
 
-from app.lib.chunker import estimate_tokens, split_into_chunks
+from app.env import settings
 from app.lib.events import APP_EVENTS
 from app.orm.models import Chunk, Document
+from app.lib.chunker import estimate_tokens, split_into_chunks
 from app.queues.jobs import dead_letter_queue
-from app.env import settings
 
 
 async def worker_function(job: Job, token: str) -> dict[str, object]:
     """Worker function to process document-processing tasks."""
-
     document_id = job.data.get("document_id")
     user_id = job.data.get("user_id")
     print(f"Processing document {document_id} (attempt {job.attemptsMade + 1})")

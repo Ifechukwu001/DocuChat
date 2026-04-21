@@ -1,6 +1,6 @@
+from uuid import UUID
 from typing import Annotated
 from collections.abc import Callable, Awaitable
-from uuid import UUID
 
 from fastapi import Depends, status
 from fastapi.security import (
@@ -8,9 +8,9 @@ from fastapi.security import (
     HTTPAuthorizationCredentials,
 )
 
+from app.services.rbac import get_user_permissions
 from app.lib.exceptions import ErrorResponse
 from app.middleware.auth import authenticate
-from app.services.rbac import get_user_permissions
 
 Authorization = Annotated[
     HTTPAuthorizationCredentials, Depends(HTTPBearer(auto_error=False))
