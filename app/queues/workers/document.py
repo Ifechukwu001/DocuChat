@@ -12,6 +12,8 @@ from app.orm.models import Chunk, Document
 from app.lib.chunker import estimate_tokens, split_into_chunks
 from app.queues.jobs import dead_letter_queue
 
+worker: Worker | None = None
+
 
 async def worker_function(job: Job, token: str) -> dict[str, object]:
     """Worker function to process document-processing tasks."""
@@ -107,15 +109,21 @@ def error_function(error: Exception, job: Job) -> None:
     print("Worker error", error)
 
 
-worker = Worker(
-    "document-processing",
-    worker_function,
-    {"connection": settings.REDIS_URL, "concurrency": 3},
-)
+def start_worker() -> Worker:
+    """Start and return the document processing worker."""
+    global worker
 
+    if worker is not None:
+        return worker
 
-worker.on("completed", completed_function)
+    worker = Worker(
+        "document-processing",
+        worker_function,
+        {"connection": settings.REDIS_URL, "concurrency": 3},
+    )
 
-worker.on("failed", failed_function)
+    worker.on("completed", completed_function)
+    worker.on("failed", failed_function)
+    worker.on("error", error_function)
 
-worker.on("error", error_function)
+    return worker

@@ -22,7 +22,7 @@ document_queue = Queue(
 )
 
 
-async def queue_document_for_processing(document_id: str, user_id: str):
+async def queue_document_for_processing(document_id: str, user_id: str) -> str:
     """Add a document to the processing queue."""
     job = await document_queue.add(  # pyright: ignore[reportUnknownMemberType]
         name="process-document",

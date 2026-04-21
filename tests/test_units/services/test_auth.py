@@ -30,9 +30,24 @@ async def test_register_success(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_emit(event: str, payload: object) -> None:
         emitted.append((event, payload))
 
+    async def fake_first() -> SimpleNamespace:
+        return SimpleNamespace(id=uuid4())
+
+    class FakeRoleQuery:
+        async def first(self) -> SimpleNamespace:
+            return await fake_first()
+
+    def fake_role_filter(**_: object) -> FakeRoleQuery:
+        return FakeRoleQuery()
+
+    async def fake_user_role_create(**kwargs: object) -> None:
+        captured["user_role_create"] = kwargs
+
     monkeypatch.setattr(auth.User, "exists", fake_exists)
     monkeypatch.setattr(auth, "hash_password", fake_password_hash)
     monkeypatch.setattr(auth.User, "create", fake_create)
+    monkeypatch.setattr(auth.Role, "filter", fake_role_filter)
+    monkeypatch.setattr(auth.UserRole, "create", fake_user_role_create)
     monkeypatch.setattr(auth.APP_EVENTS, "emit", fake_emit)
 
     response = await auth.register("USER@Example.COM", "StrongPass1")
@@ -40,13 +55,14 @@ async def test_register_success(monkeypatch: pytest.MonkeyPatch) -> None:
     assert response["success"] is True
     assert response["message"] == "User registered successfully"
     assert response["data"] == {
-        "id": user_id.hex,
+        "id": user_id,
         "email": "user@example.com",
         "tier": "free",
     }
     assert captured["exists_kwargs"] == {"email__iexact": "USER@Example.COM"}
     assert captured["created_email"] == "user@example.com"
     assert captured["created_password_hash"] == "hashed-secret"
+    assert isinstance(captured["user_role_create"], dict)
     assert len(emitted) == 1
 
 
@@ -154,7 +170,7 @@ async def test_login_success(monkeypatch: pytest.MonkeyPatch) -> None:
     assert response["success"] is True
     assert response["data"]["access_token"] == "access-token"
     assert response["data"]["refresh_token"] == "refresh-token"
-    assert response["data"]["user"]["id"] == user.id.hex
+    assert response["data"]["user"]["id"] == user.id
     assert response["data"]["user"]["tier"] == "pro"
     refresh_create = captured["refresh_create"]
     assert isinstance(refresh_create, dict)

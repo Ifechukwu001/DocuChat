@@ -8,6 +8,8 @@ from app.env import settings
 from app.queues.jobs import dead_letter_queue
 from app.lib.http.openai_breaker import call_openai
 
+worker: Worker | None = None
+
 
 async def worker_function(job: Job, token: str) -> dict[str, object]:
     """Worker function to process document-processing tasks."""
@@ -50,19 +52,25 @@ def error_function(error: Exception, job: Job) -> None:
     print("Worker error", error)
 
 
-worker = Worker(
-    "embedding-generation",
-    worker_function,
-    {
-        "connection": settings.REDIS_URL,
-        "concurrency": 5,
-        # "limiter": {"max": 100, "duration": 60000},
-    },
-)
+def start_worker() -> Worker:
+    """Start and return the document processing worker."""
+    global worker
 
+    if worker is not None:
+        return worker
 
-worker.on("completed", completed_function)
+    worker = Worker(
+        "embedding-generation",
+        worker_function,
+        {
+            "connection": settings.REDIS_URL,
+            "concurrency": 5,
+            # "limiter": {"max": 100, "duration": 60000},
+        },
+    )
 
-worker.on("failed", failed_function)
+    worker.on("completed", completed_function)
+    worker.on("failed", failed_function)
+    worker.on("error", error_function)
 
-worker.on("error", error_function)
+    return worker
