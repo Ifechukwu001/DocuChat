@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 
 from tortoise.expressions import Q
 
+from app.lib.cache import CACHE_TTL, cache_get_or_set
 from app.lib.events import APP_EVENTS
 from app.orm.models import Document
 from app.queues.jobs import document_queue, queue_document_for_processing
@@ -74,33 +75,44 @@ async def list_documents(user_id: UUID, options: ListDocumentsSchema) -> dict[st
 
 async def get_document(document_id: UUID, user_id: UUID) -> dict[str, Any]:
     """Get document details."""
-    document = await Document.get_or_none(
-        id=document_id, user_id=user_id, deleted_at=None
-    ).only(
-        "id",
-        "title",
-        "filename",
-        "status",
-        "chunk_count",
-        "created_at",
-        "updated_at",
+
+    async def _fetch_document() -> dict[str, Any] | None:
+        doc = await Document.get_or_none(
+            id=document_id, user_id=user_id, deleted_at=None
+        ).only(
+            "id",
+            "title",
+            "filename",
+            "status",
+            "chunk_count",
+            "created_at",
+            "updated_at",
+        )
+        return (
+            {
+                "id": str(doc.id),
+                "title": doc.title,
+                "status": doc.status,
+                "filename": doc.filename,
+                "chunk_count": doc.chunk_count,
+                "created_at": doc.created_at.isoformat(),
+                "updated_at": doc.updated_at.isoformat(),
+            }
+            if doc
+            else None
+        )
+
+    document = await cache_get_or_set(
+        key=f"doc:{document_id}",
+        type=dict[str, Any],
+        ttl_seconds=CACHE_TTL.DOCUMENT.value,
+        fetch_func=_fetch_document,
     )
 
     if not document:
         return error_response(404, "Document not found")
 
-    return success_response(
-        message="Document retrieved successfully",
-        data={
-            "id": document.id,
-            "title": document.title,
-            "status": document.status,
-            "filename": document.filename,
-            "chunk_count": document.chunk_count,
-            "created_at": document.created_at,
-            "updated_at": document.updated_at,
-        },
-    )
+    return success_response(message="Document retrieved successfully", data=document)
 
 
 async def create_document(title: str, content: str, user_id: UUID) -> dict[str, Any]:

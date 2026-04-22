@@ -1,3 +1,3 @@
-from . import auth, admin, document
+from . import auth, admin, cache, document
 
-__all__ = ["admin", "auth", "document"]
+__all__ = ["admin", "auth", "cache", "document"]

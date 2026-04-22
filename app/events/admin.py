@@ -15,7 +15,7 @@ class AdminEvents(StrEnum):
 
 
 @APP_EVENTS.on(AdminEvents.ROLE_ASSIGNED)
-async def handle_log_registration(data: dict[str, Any]) -> None:
+async def handle_log_registration(**data: Any) -> None:
     """Handle user registered event."""
     try:
         await UsageLog.create(
@@ -36,7 +36,7 @@ async def handle_log_registration(data: dict[str, Any]) -> None:
 
 
 @APP_EVENTS.on(AdminEvents.ROLE_REVOKED)
-async def handle_role_revocation(data: dict[str, Any]) -> None:
+async def handle_role_revocation(**data: Any) -> None:
     """Handle role revoked event."""
     try:
         await UsageLog.create(
