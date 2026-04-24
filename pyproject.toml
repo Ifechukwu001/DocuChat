@@ -10,12 +10,14 @@ dependencies = [
     "fastapi-limiter>=0.2.0",
     "fastapi[standard]>=0.135.3",
     "httpx>=0.28.1",
+    "nh3>=0.3.4",
     "pybreaker>=1.4.1",
     "pydantic>=2.12.5",
     "pydantic-settings>=2.13.1",
     "pyee>=13.0.1",
     "pyjwt>=2.12.1",
     "redis>=6.4.0",
+    "secure>=2.0.1",
     "tortoise-orm[asyncpg]>=1.1.7",
 ]
 

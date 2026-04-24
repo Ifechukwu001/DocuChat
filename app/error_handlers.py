@@ -69,3 +69,17 @@ async def rate_limit_error_response_handler(
         },
         status_code=exc.status,
     )
+
+
+@application.exception_handler(Exception)
+async def internal_server_error_response_handler(
+    request: Request, exc: Exception
+) -> JSONResponse:
+    """Exception handler for API Error responses."""
+    return JSONResponse(
+        {
+            "success": False,
+            "message": "Something went wrong. Please try again later.",
+        },
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )

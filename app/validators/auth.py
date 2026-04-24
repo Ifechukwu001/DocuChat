@@ -1,15 +1,17 @@
 import re
 from typing import Annotated
 
-from pydantic import Field, EmailStr, BaseModel, AfterValidator
+from pydantic import Field, BaseModel
+
+from ._commons import String, EmailString
 
 
 class RegisterSchema(BaseModel):
     """Register Schema."""
 
-    email: Annotated[EmailStr, AfterValidator(lambda v: v.lower().strip())]
+    email: EmailString
     password: Annotated[
-        str,
+        String,
         Field(
             min_length=8,
             max_length=128,
@@ -21,11 +23,11 @@ class RegisterSchema(BaseModel):
 class LoginSchema(BaseModel):
     """Login Schema."""
 
-    email: Annotated[EmailStr, AfterValidator(lambda v: v.lower().strip())]
-    password: Annotated[str, Field(min_length=1)]
+    email: EmailString
+    password: Annotated[String, Field(min_length=1)]
 
 
 class RefreshSchema(BaseModel):
     """Refresh Schema."""
 
-    refresh_token: Annotated[str, Field(min_length=1)]
+    refresh_token: Annotated[String, Field(min_length=1)]
