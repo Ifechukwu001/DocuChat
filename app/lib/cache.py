@@ -5,10 +5,12 @@ from enum import IntEnum
 from typing import cast
 from collections.abc import Callable, Awaitable
 
+from redis import StrictRedis as SyncStrictRedis
 from redis.asyncio import StrictRedis
 
 from app.env import settings
 
+sync_cache_redis = SyncStrictRedis.from_url(settings.REDIS_URL, decode_responses=True)  # type: ignore
 cache_redis = StrictRedis.from_url(settings.REDIS_URL, decode_responses=True)  # type: ignore
 
 

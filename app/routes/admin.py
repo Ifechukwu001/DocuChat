@@ -9,8 +9,11 @@ from app.orm.models import Role, User, UserRole
 from app.middleware.auth import authenticate
 from app.middleware.authorize import require_permission
 from app.lib.response_formatter import error_response, success_response
+from app.middleware.ratelimiter import api_limiter
 
-router = APIRouter(dependencies=[Depends(require_permission("roles:manage"))])
+router = APIRouter(
+    dependencies=[Depends(require_permission("roles:manage")), Depends(api_limiter)]
+)
 
 
 @router.get("/roles")

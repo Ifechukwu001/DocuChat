@@ -48,7 +48,7 @@ async def handle_conversation(user: User) -> None:
 
 
 @APP_EVENTS.on(AuthEvents.USER_LOGGED_IN)
-async def handle_log_login(data: Any) -> None:  # noqa: ANN401
+async def handle_log_login(data: Any) -> None:
     """Handle user logged in event."""
     try:
         await UsageLog.create(
@@ -68,7 +68,7 @@ async def handle_log_login(data: Any) -> None:  # noqa: ANN401
 
 
 @APP_EVENTS.on(AuthEvents.LOGIN_FAILED)
-async def handle_log_failed_login(data: Any) -> None:  # noqa: ANN401
+async def handle_log_failed_login(data: Any) -> None:
     """Handle failed login event."""
     try:
         print(f"Failed login attempt for {data.email} from {data.device_info}")

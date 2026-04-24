@@ -1,4 +1,4 @@
-from fastapi import Request, APIRouter, status
+from fastapi import Depends, Request, APIRouter, status
 
 from app.services import auth as auth_service
 from app.responses.auth import UserResponse, LoginResponse, RefreshResponse
@@ -8,8 +8,9 @@ from app.responses.envelope import (
     SuccessResponse,
     ValidationErrorResponse,
 )
+from app.middleware.ratelimiter import auth_limiter
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(auth_limiter)])
 
 
 @router.post(

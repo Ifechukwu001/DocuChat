@@ -7,8 +7,9 @@ from app.services import document as document_service
 from app.middleware.auth import authenticate
 from app.validators.document import ListDocumentsSchema, CreateDocumentSchema
 from app.middleware.authorize import require_permission
+from app.middleware.ratelimiter import api_limiter, upload_limiter
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(api_limiter)])
 
 
 @router.get("", dependencies=[Depends(require_permission("documents:read"))])
@@ -23,7 +24,10 @@ async def list_documents(
 @router.post(
     "",
     status_code=status.HTTP_202_ACCEPTED,
-    dependencies=[Depends(require_permission("documents:create"))],
+    dependencies=[
+        Depends(require_permission("documents:create")),
+        Depends(upload_limiter),
+    ],
 )
 async def create_document(
     user_id: Annotated[UUID, Depends(authenticate)], details: CreateDocumentSchema

@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
 from app.main import application
-from app.lib.exceptions import ErrorResponse
+from app.lib.exceptions import ErrorResponse, RateLimitErrorResponse
 
 
 @application.exception_handler(ErrorResponse)
@@ -54,4 +54,18 @@ async def validation_error_response_handler(
             }
         ),
         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+    )
+
+
+@application.exception_handler(RateLimitErrorResponse)
+async def rate_limit_error_response_handler(
+    request: Request, exc: RateLimitErrorResponse
+) -> JSONResponse:
+    """Exception handler for Rate Limit Error responses."""
+    return JSONResponse(
+        {
+            "success": False,
+            "message": exc.message,
+        },
+        status_code=exc.status,
     )

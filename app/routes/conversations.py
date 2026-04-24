@@ -5,9 +5,10 @@ from fastapi import Depends, APIRouter
 
 from app.services import conversation as conversation_service
 from app.middleware.auth import authenticate
+from app.middleware.ratelimiter import api_limiter, chat_limiter
 from app.validators.conversation import SendMessageSchema, CreateConversationSchema
 
-router = APIRouter(dependencies=[Depends(authenticate)])
+router = APIRouter(dependencies=[Depends(authenticate), Depends(api_limiter)])
 
 
 @router.get("")
@@ -18,7 +19,7 @@ async def list_conversations(
     return await conversation_service.list_conversations(user_id, page, limit)
 
 
-@router.post("")
+@router.post("", dependencies=[Depends(chat_limiter)])
 async def create_conversation(details: CreateConversationSchema) -> dict[str, object]:
     """Create a new conversation."""
     return {}
@@ -30,7 +31,7 @@ async def get_conversation_messages(id: UUID) -> dict[str, object]:
     return {}
 
 
-@router.post("/{id}/messages")
+@router.post("/{id}/messages", dependencies=[Depends(chat_limiter)])
 async def create_conversation_message(
     id: UUID,
     user_id: Annotated[UUID, Depends(authenticate)],

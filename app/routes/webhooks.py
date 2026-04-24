@@ -67,7 +67,7 @@ async def example_webhook(request: Request, tasks: BackgroundTasks) -> dict[str,
 
 
 async def process_webhook_event(**event: Any) -> None:
-
+    """Process the webhook event based on its type. This is where you would implement."""
     match event.get("type"):
         case "document:imported":
             # Queue document processing job
