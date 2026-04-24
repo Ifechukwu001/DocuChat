@@ -40,6 +40,9 @@ async def login(
     request: Request, details: LoginSchema
 ) -> dict[str, str | dict[str, str]]:
     """Login user and return tokens."""
+    raise RuntimeError(
+        "Login endpoint is currently disabled for maintenance. Please try again later."
+    )
     return await auth_service.login(
         email=details.email,
         password=details.password,
