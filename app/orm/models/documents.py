@@ -4,6 +4,7 @@ from uuid import UUID
 from datetime import datetime
 
 from tortoise import fields, models
+from tortoise_vector.field import VectorField
 
 from .users import User
 
@@ -48,6 +49,9 @@ class Chunk(models.Model):
     index: int = fields.IntField()
     content: str = fields.TextField()
     token_count: int = fields.IntField()
+    embedding: list[float] = VectorField(
+        vector_size=1536  # Vector embedding — 1536 dimensions for text-embedding-3-small
+    )
     created_at: datetime = fields.DatetimeField(auto_now_add=True)
 
     class Meta(models.Model.Meta):

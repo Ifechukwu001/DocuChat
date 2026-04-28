@@ -1,5 +1,6 @@
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportArgumentType=false
 import asyncio
+from typing import Any
 from datetime import UTC, datetime
 
 from bullmq import Job, Worker  # type: ignore
@@ -12,9 +13,9 @@ from app.lib.http.openai_breaker import call_openai
 worker: Worker | None = None
 
 
-async def worker_function(job: Job, token: str) -> dict[str, object]:
+async def worker_function(job: Job, token: str) -> Any:
     """Worker function to process document-processing tasks."""
-    return call_openai(
+    return await call_openai(
         "/embeddings",
         input=job.data.text,
         model="text-embedding-3-small",

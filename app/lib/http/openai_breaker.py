@@ -1,5 +1,8 @@
 from typing import Any
+from functools import wraps
+from collections.abc import Callable, Awaitable
 
+import httpx
 from pybreaker import (
     STATE_OPEN,
     STATE_CLOSED,
@@ -38,11 +41,23 @@ openai_breaker = CircuitBreaker(
 )
 
 
-@openai_breaker
-async def call_openai(path: str, **body: Any) -> None:
+def _breaker_with_wraps[**P, R](
+    func: Callable[P, Awaitable[R]],
+) -> Callable[P, Awaitable[R]]:
+    protected = openai_breaker(func)  # type: ignore
+
+    @wraps(func)
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        return await protected(*args, **kwargs)  # type: ignore
+
+    return wrapper
+
+
+@_breaker_with_wraps
+async def call_openai(path: str, **body: Any) -> httpx.Response:
     """Call OpenAI API with circuit breaker protection."""
 
-    async def call() -> None:
-        await openai_client.post(path, json=body)
+    async def call() -> httpx.Response:
+        return await openai_client.post(path, json=body)
 
     return await with_retry(call)

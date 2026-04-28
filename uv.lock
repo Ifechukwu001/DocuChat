@@ -263,6 +263,7 @@ dependencies = [
     { name = "secure" },
     { name = "structlog" },
     { name = "tortoise-orm", extra = ["asyncpg"] },
+    { name = "tortoise-vector" },
 ]
 
 [package.dev-dependencies]
@@ -292,6 +293,7 @@ requires-dist = [
     { name = "secure", specifier = ">=2.0.1" },
     { name = "structlog", specifier = ">=25.5.0" },
     { name = "tortoise-orm", extras = ["asyncpg"], specifier = ">=1.1.7" },
+    { name = "tortoise-vector", specifier = ">=0.2.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -1079,6 +1081,18 @@ wheels = [
 [package.optional-dependencies]
 asyncpg = [
     { name = "asyncpg" },
+]
+
+[[package]]
+name = "tortoise-vector"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tortoise-orm", extra = ["asyncpg"] },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f1/6d/223d85c2f854371927f2ca6d76bbf82ba32a59a449c96bdd95e18c8739de/tortoise_vector-0.2.0.tar.gz", hash = "sha256:27692a5c8cd579809ac57f576c4400f53299403728e0d38ac62bc685c839c024", size = 2794, upload-time = "2025-10-10T14:21:05.247Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ee/c6/4093934eb0baca06c3fd7c171aecc3b2c8692ec7ca403728d49481aad8b2/tortoise_vector-0.2.0-py3-none-any.whl", hash = "sha256:38e9b89e2357312653cd8348f92f21771716473b3922d35a13720130fb9f2fee", size = 3940, upload-time = "2025-10-10T14:21:04.387Z" },
 ]
 
 [[package]]
