@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 
 from app.lib.events import APP_EVENTS
 from app.orm.models import User, UsageLog, Conversation
+from app.lib.logging import logger
 
 
 class AuthEvents(StrEnum):
@@ -35,7 +36,7 @@ async def handle_log_registration(user: User) -> None:
             ),
         )
     except Exception as e:
-        print(f"Failed to log signup: {e}")
+        logger.error("Failed to log signup", exc_info=e)
 
 
 @APP_EVENTS.on(AuthEvents.USER_REGISTERED)
@@ -44,33 +45,35 @@ async def handle_conversation(user: User) -> None:
     try:
         await Conversation.create(user_id=user.id, title="Welcome to DocuChat")
     except Exception as e:
-        print(f"Failed to create welcome conversation: {e}")
+        logger.error("Failed to create welcome conversation", exc_info=e)
 
 
 @APP_EVENTS.on(AuthEvents.USER_LOGGED_IN)
-async def handle_log_login(data: Any) -> None:
+async def handle_log_login(**data: Any) -> None:
     """Handle user logged in event."""
     try:
         await UsageLog.create(
-            user_id=data.user_id,
+            user_id=data.get("user_id"),
             action="login",
             tokens=0,
             cost_usd=0,
             metadata=json.dumps(
                 {
-                    "device_info": data.device_info,
+                    "device_info": data.get("device_info"),
                     "login_at": datetime.now(UTC).isoformat(),
                 }
             ),
         )
     except Exception as e:
-        print(f"Failed to log login: {e}")
+        logger.error("Failed to log login", exc_info=e)
 
 
 @APP_EVENTS.on(AuthEvents.LOGIN_FAILED)
-async def handle_log_failed_login(data: Any) -> None:
+async def handle_log_failed_login(**data: Any) -> None:
     """Handle failed login event."""
     try:
-        print(f"Failed login attempt for {data.email} from {data.device_info}")
+        logger.error(
+            f"Failed login attempt for {data.get('email')} from {data.get('device_info')}"
+        )
     except Exception as e:
-        print(f"Failed to log failed login: {e}")
+        logger.error("Failed to log failed login", exc_info=e)

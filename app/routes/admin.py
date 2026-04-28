@@ -62,9 +62,9 @@ async def assign_user_roles(
 
     APP_EVENTS.emit(
         "admin:role_assigned",
-        {
-            "assigned_by": admin_id.hex,
-            "target_user_id": user_id.hex,
+        **{
+            "assigned_by": admin_id,
+            "target_user_id": user_id,
             "role_name": role_name,
         },
     )
@@ -87,9 +87,9 @@ async def remove_user_role(
 
     APP_EVENTS.emit(
         "admin:role_revoked",
-        {
-            "revoked_by": admin_id.hex,
-            "target_user_id": user_id.hex,
+        **{
+            "revoked_by": admin_id,
+            "target_user_id": user_id,
             "role_name": role_name,
         },
     )

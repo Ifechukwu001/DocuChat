@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 
 from app.lib.events import APP_EVENTS
 from app.orm.models import UsageLog
+from app.lib.logging import logger
 
 
 class DocEvents(StrEnum):
@@ -33,7 +34,7 @@ async def handle_log_creation(data: dict[str, Any]) -> None:
             ),
         )
     except Exception as e:
-        print(f"Failed to log document creation: {e}")
+        logger.error("Failed to log document creation", exc_info=e)
 
 
 @APP_EVENTS.on(DocEvents.DOCUMENT_DELETED)
@@ -54,4 +55,4 @@ async def handle_log_deletion(data: dict[str, Any]) -> None:
             ),
         )
     except Exception as e:
-        print(f"Failed to log document deletion: {e}")
+        logger.error("Failed to log document deletion", exc_info=e)

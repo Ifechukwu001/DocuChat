@@ -6,6 +6,7 @@ from fastapi import Depends, Request, APIRouter, BackgroundTasks, status
 
 from app.env import settings
 from app.orm.models import WebhookEvent
+from app.lib.logging import logger
 from app.responses.envelope import (
     ErrorResponse,
     ValidationErrorResponse,
@@ -57,7 +58,7 @@ async def example_webhook(request: Request, tasks: BackgroundTasks) -> dict[str,
                 processed_at=datetime.now(UTC)
             )
         except Exception as e:
-            print(f"`Webhook {event.get('id')} processing failed:", e)
+            logger.error(f"`Webhook {event.get('id')} processing failed:", exc_info=e)
 
     tasks.add_task(process_event)
 
@@ -73,4 +74,4 @@ async def process_webhook_event(**event: Any) -> None:
             # Queue document processing job
             pass
         case _:
-            print(f"Unhandled webhook event type: {event.get('type')}")
+            logger.warning(f"Unhandled webhook event type: {event.get('type')}")

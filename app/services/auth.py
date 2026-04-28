@@ -45,14 +45,14 @@ async def login(
     user = await User.get_or_none(email__iexact=email)
     if not user or not user.is_active:
         APP_EVENTS.emit(
-            AuthEvents.LOGIN_FAILED, {"email": email, "device_info": device_info}
+            AuthEvents.LOGIN_FAILED, **{"email": email, "device_info": device_info}
         )
         return error_response(HTTPStatus.BAD_REQUEST, "Invalid credentials")
 
     valid = verify_password(password, user.password_hash)
     if not valid:
         APP_EVENTS.emit(
-            AuthEvents.LOGIN_FAILED, {"email": email, "device_info": device_info}
+            AuthEvents.LOGIN_FAILED, **{"email": email, "device_info": device_info}
         )
         return error_response(HTTPStatus.BAD_REQUEST, "Invalid credentials")
 
@@ -68,7 +68,8 @@ async def login(
     )
 
     APP_EVENTS.emit(
-        AuthEvents.USER_LOGGED_IN, {"user_id": user.id.hex, "device_info": device_info}
+        AuthEvents.USER_LOGGED_IN,
+        **{"user_id": user.id.hex, "device_info": device_info},
     )
 
     return success_response(

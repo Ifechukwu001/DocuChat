@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 
 from app.lib.events import APP_EVENTS
 from app.orm.models import UsageLog
+from app.lib.logging import logger
 
 
 class AdminEvents(StrEnum):
@@ -32,7 +33,7 @@ async def handle_log_registration(**data: Any) -> None:
             ),
         )
     except Exception as e:
-        print(f"Failed to log role assignment: {e}")
+        logger.error("Failed to log role assignment", exc_info=e)
 
 
 @APP_EVENTS.on(AdminEvents.ROLE_REVOKED)
@@ -53,4 +54,4 @@ async def handle_role_revocation(**data: Any) -> None:
             ),
         )
     except Exception as e:
-        print(f"Failed to log role revocation: {e}")
+        logger.error("Failed to log role revocation", exc_info=e)

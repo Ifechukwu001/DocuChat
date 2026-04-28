@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from bullmq import Job, Worker  # type: ignore
 
 from app.env import settings
+from app.lib.logging import logger
 from app.queues.jobs import dead_letter_queue
 from app.lib.http.openai_breaker import call_openai
 
@@ -21,17 +22,19 @@ async def worker_function(job: Job, token: str) -> dict[str, object]:
 
 
 def completed_function(job: Job) -> None:
-    print(
+    """Handle successful completion of a job."""
+    logger.info(
         f"Job {job.id} completed: {job.returnvalue.get('chunks') if job.returnvalue else ''} chunks"
     )
 
 
 def failed_function(job: Job | None, error: Exception) -> None:
+    """Handle failed job attempts."""
     if not job:
         return
 
     if job.attemptsMade >= job.opts.get("attempts", 3):
-        print(f"Job {job.id} permanently failed. Moving to DLQ.")
+        logger.error(f"Job {job.id} permanently failed. Moving to DLQ.")
 
         asyncio.create_task(
             dead_letter_queue.add(
@@ -45,11 +48,12 @@ def failed_function(job: Job | None, error: Exception) -> None:
                     "attempts": job.attemptsMade,
                 },
             )
-        )
+        ).result()
 
 
 def error_function(error: Exception, job: Job) -> None:
-    print("Worker error", error)
+    """Handle unexpected errors in the worker."""
+    logger.error("Worker error", exc_info=error)
 
 
 def start_worker() -> Worker:
@@ -65,7 +69,7 @@ def start_worker() -> Worker:
         {
             "connection": settings.REDIS_URL,
             "concurrency": 5,
-            # "limiter": {"max": 100, "duration": 60000},
+            # "limiter": {"max": 100, "duration": 60000},  # noqa: ERA001
         },
     )
 

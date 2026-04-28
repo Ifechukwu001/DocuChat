@@ -3,6 +3,8 @@ from collections.abc import Callable, Awaitable
 
 import httpx
 
+from app.lib.logging import logger
+
 
 def is_retriable(error: httpx.HTTPError) -> bool:
     """Determine if an HTTP error is retriable."""
@@ -53,7 +55,7 @@ async def with_retry[T](
                 else base_delay_secs * (2 ** (attempt - 1))
             )
 
-            print(
+            logger.warning(
                 f"Attempt {attempt} failed with retriable error: {error}. "
                 f"Retrying in {delay_secs} seconds..."
             )

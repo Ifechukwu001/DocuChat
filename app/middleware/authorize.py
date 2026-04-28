@@ -1,4 +1,3 @@
-from uuid import UUID
 from typing import Annotated
 from collections.abc import Callable, Awaitable
 
@@ -10,7 +9,7 @@ from fastapi.security import (
 
 from app.services.rbac import get_user_permissions
 from app.lib.exceptions import ErrorResponse
-from app.middleware.auth import authenticate
+from app.middleware.auth import UserInfo, authenticate
 
 Authorization = Annotated[
     HTTPAuthorizationCredentials, Depends(HTTPBearer(auto_error=False))
@@ -19,12 +18,12 @@ Authorization = Annotated[
 
 def require_permission(
     *args: str,
-) -> Callable[[UUID], Awaitable[None]]:
+) -> Callable[[UserInfo], Awaitable[None]]:
     """Authorize request."""
 
-    async def _(user_id: Annotated[UUID, Depends(authenticate)]) -> None:
+    async def _(user: Annotated[UserInfo, Depends(authenticate)]) -> None:
 
-        user_permissions = await get_user_permissions(user_id)
+        user_permissions = await get_user_permissions(user.get("id"))
 
         if not all(permission in user_permissions for permission in args):
             raise ErrorResponse(

@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import Depends, Request
 
 from app.lib.cache import cache_redis
+from app.lib.logging import logger
 from app.middleware.auth import UserInfo, authenticate
 
 
@@ -24,6 +25,6 @@ async def track_suspicious_activity(
             unique_docs = await cache_redis.scard(key)  # type: ignore
             if unique_docs > 50:
                 # Flag user for review - In production, this could trigger an alert or further investigation
-                print(
+                logger.warning(
                     f"Suspicious: user {user_id} accessed {unique_docs} unique documents in 5 min"
                 )

@@ -4,6 +4,7 @@ from tortoise import Tortoise, run_async  # type: ignore
 
 from app.orm.config import TORTOISE_CONFIG
 from app.orm.models import Role, Permission, RolePermission
+from app.lib.logging import logger
 
 
 async def main() -> None:
@@ -117,7 +118,7 @@ async def main() -> None:
                 role=role, permission=permissions[perm_name]
             )
 
-    print("RBAC seeded: 3 roles, 9 permissions")
+    logger.info("RBAC seeded: 3 roles, 9 permissions")
 
 
 if __name__ == "__main__":

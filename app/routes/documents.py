@@ -9,7 +9,7 @@ from app.validators.document import ListDocumentsSchema, CreateDocumentSchema
 from app.middleware.authorize import require_permission
 from app.middleware.ratelimiter import api_limiter, upload_limiter
 
-router = APIRouter(dependencies=[Depends(api_limiter)])
+router = APIRouter(dependencies=[Depends(authenticate), Depends(api_limiter)])
 
 
 @router.get("", dependencies=[Depends(require_permission("documents:read"))])

@@ -12,6 +12,8 @@ class EnvSettings(BaseSettings):
 
     model_config = SettingsConfigDict(extra="ignore")
 
+    IS_PRODUCTION: bool = False
+
     ALLOWED_ORIGINS: list[str] = []
 
     DB_URL: PostgresDsn | str = ""

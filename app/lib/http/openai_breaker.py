@@ -9,23 +9,28 @@ from pybreaker import (
     CircuitBreakerListener,
 )
 
+from app.lib.logging import logger
+
 from .retry import with_retry
 from .openai_client import openai_client
 
 
 class OpenAIBreakerListener(CircuitBreakerListener):
+    """Listener for OpenAI circuit breaker state changes."""
+
     def state_change(
         self,
         cb: CircuitBreaker,
         old_state: CircuitBreakerState | None,
         new_state: CircuitBreakerState,
     ) -> None:
+        """Log circuit breaker state changes."""
         if new_state.name == STATE_OPEN:
-            print("⚠️  OpenAI circuit breaker OPENED — requests will fail fast")
+            logger.warning("⚠️  OpenAI circuit breaker OPENED — requests will fail fast")
         elif new_state.name == STATE_HALF_OPEN:
-            print("🔄  OpenAI circuit breaker HALF-OPEN — testing recovery")
+            logger.info("🔄  OpenAI circuit breaker HALF-OPEN — testing recovery")
         elif new_state.name == STATE_CLOSED:
-            print("✅  OpenAI circuit breaker CLOSED — normal operation")
+            logger.info("✅  OpenAI circuit breaker CLOSED — normal operation")
 
 
 openai_breaker = CircuitBreaker(
@@ -34,8 +39,10 @@ openai_breaker = CircuitBreaker(
 
 
 @openai_breaker
-async def call_openai(path: str, **body: Any):
-    async def call():
+async def call_openai(path: str, **body: Any) -> None:
+    """Call OpenAI API with circuit breaker protection."""
+
+    async def call() -> None:
         await openai_client.post(path, json=body)
 
     return await with_retry(call)

@@ -4,12 +4,15 @@ from collections.abc import Callable, Awaitable, AsyncIterator
 
 from secure import Secure, ContentSecurityPolicy
 from fastapi import FastAPI, Request, Response
+from prometheus_client import make_asgi_app  # type: ignore
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__, __description__, __display_name__
 from app.env import settings
 from app.routes import router as api_router
 from app.orm.config import register_orm
+from app.middleware.metrics import MetricsMiddleware
+from app.middleware.request_logger import RequestLoggerMiddleware
 
 
 @asynccontextmanager
@@ -19,6 +22,8 @@ async def _lifespan(api: FastAPI) -> AsyncIterator[None]:
 
         import app.events  # type: ignore
         import app.queues.workers  # type: ignore  # noqa: F401
+
+        api.state.uptime = datetime.now(UTC)
 
         yield
 
@@ -68,11 +73,15 @@ application.add_middleware(
     max_age=86400,  # Cache preflight requests for 24 hours
 )
 
+# Add Request Logger Middleware
+application.add_middleware(RequestLoggerMiddleware)
 
-@application.get("/health", tags=["Health"])
-async def health_check() -> dict[str, str]:
-    """Health check endpoint."""
-    return {"status": "ok", "timestamp": datetime.now(UTC).isoformat()}
+# Add Metrics Middleware
+application.add_middleware(MetricsMiddleware)
+
+
+# Add Prometheus metrics endpoint
+application.mount("/metrics", make_asgi_app())  # type: ignore
 
 
 application.include_router(api_router, prefix="/api")
