@@ -7,6 +7,7 @@ from tortoise import transactions
 from app.lib.cache import CACHE_TTL, hash_key, cache_get, cache_set
 from app.orm.models import Chunk
 from app.lib.logging import logger
+from app.lib.metrics import embedding_cache_hit_rate
 from app.lib.http.openai_breaker import call_openai
 
 EMBEDDING_MODEL = "text-embedding-3-small"
@@ -106,6 +107,7 @@ async def generate_embedding_cached(text: str) -> list[float]:
     # Check cache first
     cached = await cache_get(cache_key, list[float])
     if cached:
+        embedding_cache_hit_rate.inc()
         logger.debug("Embedding cache hit", hash=hash[:12])
         return cached
 
@@ -135,6 +137,7 @@ async def generate_embeddings_batch_cached(texts: list[str]) -> list[list[float]
 
         cached = await cache_get(f"embed:{hash}", list[float])
         if cached:
+            embedding_cache_hit_rate.inc()
             logger.debug("Embedding batch cache hit", index=i, hash=hash[:12])
             results[i] = cached
         else:

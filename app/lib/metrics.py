@@ -43,3 +43,26 @@ cache_operations = Counter(
     labelnames=["operation", "result"],  # get/set, hit/miss
     namespace="docuchat_",
 )
+
+
+ingestion_duration = Histogram(
+    name="docuchat_ingestion_duration_seconds",
+    documentation="Document ingestion duration",
+    labelnames=["format"],
+    namespace="docuchat_",
+    buckets=[1, 5, 10, 30, 60, 120, 300],
+)
+
+chunks_per_document = Histogram(
+    name="docuchat_chunks_per_document",
+    documentation="Number of chunks generated per document",
+    namespace="docuchat_",
+    buckets=[5, 10, 25, 50, 100, 250, 500],
+)
+
+
+embedding_cache_hit_rate = Gauge(
+    name="docuchat_embedding_cache_hit_rate",
+    documentation="Percentage of embedding requests served from cache",
+    namespace="docuchat_",
+)

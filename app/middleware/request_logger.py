@@ -20,7 +20,7 @@ class RequestLoggerMiddleware:
         if scope["type"] == "http":
             request = Request(scope)
 
-            correlation_id = request.headers.get("X-Correlation-ID", uuid4().hex)
+            correlation_id = request.headers.get("X-Correlation-ID", str(uuid4()))
             request.state.correlation_id = correlation_id
 
             start_time = datetime.now(UTC)

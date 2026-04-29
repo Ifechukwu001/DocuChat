@@ -115,7 +115,9 @@ async def get_document(document_id: UUID, user_id: UUID) -> dict[str, Any]:
     return success_response(message="Document retrieved successfully", data=document)
 
 
-async def create_document(title: str, content: str, user_id: UUID) -> dict[str, Any]:
+async def create_document(
+    title: str, content: str, user_id: UUID, correlation_id: UUID
+) -> dict[str, Any]:
     """Create a new document."""
     document = await Document.create(
         title=title,
@@ -126,15 +128,18 @@ async def create_document(title: str, content: str, user_id: UUID) -> dict[str, 
     )
 
     job_id = await queue_document_for_processing(
-        document_id=document.id.hex, user_id=user_id.hex
+        document_id=str(document.id),
+        user_id=str(user_id),
+        correlation_id=str(correlation_id),
     )
 
     APP_EVENTS.emit(
         "doc:created",
         {
-            "document_id": document.id.hex,
-            "user_id": user_id.hex,
+            "document_id": str(document.id),
+            "user_id": str(user_id),
             "title": document.title,
+            "correlation_id": str(correlation_id),
         },
     )
 
