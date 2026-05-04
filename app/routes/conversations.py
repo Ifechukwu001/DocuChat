@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Depends, APIRouter
 
 from app.services import conversation as conversation_service
-from app.middleware.auth import authenticate
+from app.middleware.auth import UserInfo, authenticate
 from app.middleware.ratelimiter import api_limiter, chat_limiter
 from app.validators.conversation import SendMessageSchema, CreateConversationSchema
 
@@ -13,10 +13,10 @@ router = APIRouter(dependencies=[Depends(authenticate), Depends(api_limiter)])
 
 @router.get("")
 async def list_conversations(
-    user_id: Annotated[UUID, Depends(authenticate)], page: int = 1, limit: int = 10
+    user: Annotated[UserInfo, Depends(authenticate)], page: int = 1, limit: int = 10
 ) -> dict[str, object]:
     """List conversations."""
-    return await conversation_service.list_conversations(user_id, page, limit)
+    return await conversation_service.list_conversations(user["id"], page, limit)
 
 
 @router.post("", dependencies=[Depends(chat_limiter)])

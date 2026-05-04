@@ -16,7 +16,7 @@ worker: Worker | None = None
 async def worker_function(job: Job, token: str) -> Any:
     """Worker function to process document-processing tasks."""
     return await call_openai(
-        "/embeddings",
+        "/embed",
         input=job.data.text,
         model="text-embedding-3-small",
     )

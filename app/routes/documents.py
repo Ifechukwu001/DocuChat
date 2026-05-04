@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import Query, Depends, Request, APIRouter, status
 
 from app.services import document as document_service
-from app.middleware.auth import authenticate
+from app.middleware.auth import UserInfo, authenticate
 from app.validators.document import ListDocumentsSchema, CreateDocumentSchema
 from app.middleware.authorize import require_permission
 from app.middleware.ratelimiter import api_limiter, upload_limiter
@@ -14,11 +14,11 @@ router = APIRouter(dependencies=[Depends(authenticate), Depends(api_limiter)])
 
 @router.get("", dependencies=[Depends(require_permission("documents:read"))])
 async def list_documents(
-    user_id: Annotated[UUID, Depends(authenticate)],
+    user: Annotated[UserInfo, Depends(authenticate)],
     filter: Annotated[ListDocumentsSchema, Query()],
 ) -> dict[str, object]:
     """List documents."""
-    return await document_service.list_documents(user_id, filter)
+    return await document_service.list_documents(user["id"], filter)
 
 
 @router.post(
@@ -30,7 +30,7 @@ async def list_documents(
     ],
 )
 async def create_document(
-    user_id: Annotated[UUID, Depends(authenticate)],
+    user: Annotated[UserInfo, Depends(authenticate)],
     details: CreateDocumentSchema,
     request: Request,
 ) -> dict[str, object]:
@@ -38,17 +38,17 @@ async def create_document(
     return await document_service.create_document(
         details.title,
         details.content,
-        user_id,
+        user["id"],
         correlation_id=UUID(request.state.correlation_id),
     )
 
 
 @router.get("/{id}", dependencies=[Depends(require_permission("documents:read"))])
 async def get_document(
-    id: UUID, user_id: Annotated[UUID, Depends(authenticate)]
+    id: UUID, user: Annotated[UserInfo, Depends(authenticate)]
 ) -> dict[str, object]:
     """Get document details."""
-    return await document_service.get_document(id, user_id)
+    return await document_service.get_document(id, user["id"])
 
 
 @router.delete(
@@ -56,10 +56,10 @@ async def get_document(
     dependencies=[Depends(require_permission("documents:delete"))],
 )
 async def delete_document(
-    id: UUID, user_id: Annotated[UUID, Depends(authenticate)]
+    id: UUID, user: Annotated[UserInfo, Depends(authenticate)]
 ) -> dict[str, object]:
     """Delete a document."""
-    return await document_service.delete_document(id, user_id)
+    return await document_service.delete_document(id, user["id"])
 
 
 @router.get(
@@ -67,7 +67,7 @@ async def delete_document(
     dependencies=[Depends(require_permission("documents:read"))],
 )
 async def get_processing_status(
-    id: UUID, user_id: Annotated[UUID, Depends(authenticate)]
+    id: UUID, user: Annotated[UserInfo, Depends(authenticate)]
 ) -> dict[str, object]:
     """Get the processing status of a document."""
-    return await document_service.get_processing_status(id, user_id)
+    return await document_service.get_processing_status(id, user["id"])

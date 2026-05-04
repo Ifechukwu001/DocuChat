@@ -1,6 +1,7 @@
 # pyright: reportUnknownMemberType=false, reportUnknownVariableType=false, reportUnknownArgumentType=false, reportArgumentType=false
 import asyncio
 from uuid import UUID
+from typing import Any
 from datetime import UTC, datetime
 
 from bullmq import Job, Worker  # type: ignore
@@ -157,12 +158,12 @@ async def worker_function(job: Job, token: str) -> dict[str, object]:
             document.error = str(e)
             await document.save()
 
-        logger.error(f"Error processing document {document_id}: {e}")
+        logger.exception(f"Error processing document {document_id}: {e}")
 
         raise
 
 
-def completed_function(job: Job) -> None:
+def completed_function(job: Job, *args: Any, **kwargs: Any) -> None:
     """Handle successful completion of a job."""
     logger.info(
         f"Job {job.id} completed: {job.returnvalue.get('chunks') if job.returnvalue else ''} chunks"

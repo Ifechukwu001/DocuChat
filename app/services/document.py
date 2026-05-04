@@ -122,7 +122,7 @@ async def create_document(
     document = await Document.create(
         title=title,
         content=content,
-        filename="-".join(title.lower().split()),
+        filename="-".join(title.lower().split()) + ".txt",
         user_id=user_id,
         status="pending",
     )

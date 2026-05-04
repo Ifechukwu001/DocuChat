@@ -2,7 +2,6 @@ from datetime import UTC, datetime
 
 import httpx
 
-from app.env import settings
 from app.lib.logging import logger
 
 
@@ -34,10 +33,9 @@ async def ratlimit_requests(response: httpx.Response) -> None:
 
 
 openai_client = httpx.AsyncClient(
-    base_url="https://api.openai.com/v1",
+    base_url="http://localhost:11434/api",
     timeout=30,
     headers={
-        "Authorization": f"Bearer {settings.OPENAI_API_KEY}",
         "Content-Type": "application/json",
         "User-Agent": "DocuChat/1.0",
     },

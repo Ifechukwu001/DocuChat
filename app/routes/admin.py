@@ -6,7 +6,7 @@ from tortoise.functions import Count
 
 from app.lib.events import APP_EVENTS
 from app.orm.models import Role, User, UserRole
-from app.middleware.auth import authenticate
+from app.middleware.auth import UserInfo, authenticate
 from app.middleware.authorize import require_permission
 from app.lib.response_formatter import error_response, success_response
 from app.middleware.ratelimiter import api_limiter
@@ -45,7 +45,7 @@ async def list_roles() -> dict[str, object]:
 async def assign_user_roles(
     user_id: UUID,
     role_name: Annotated[str, Body(embed=True)],
-    admin_id: Annotated[UUID, Depends(authenticate)],
+    admin: Annotated[UserInfo, Depends(authenticate)],
 ) -> dict[str, object]:
     """Assign a role to a user."""
     user = await User.get_or_none(id=user_id)
@@ -57,14 +57,14 @@ async def assign_user_roles(
         return error_response(404, f"Role {role_name} not found")
 
     await UserRole.get_or_create(  # type: ignore
-        user=user, role=role, defaults={"assigned_by": admin_id}
+        user=user, role=role, defaults={"assigned_by": admin["id"]}
     )
 
     APP_EVENTS.emit(
         "admin:role_assigned",
         **{
-            "assigned_by": admin_id,
-            "target_user_id": user_id,
+            "assigned_by": str(admin["id"]),
+            "target_user_id": str(user_id),
             "role_name": role_name,
         },
     )
@@ -76,7 +76,7 @@ async def assign_user_roles(
 async def remove_user_role(
     user_id: UUID,
     role_name: str,
-    admin_id: Annotated[UUID, Depends(authenticate)],
+    admin: Annotated[UserInfo, Depends(authenticate)],
 ) -> dict[str, object]:
     """Remove a role from a user."""
     role = await Role.get_or_none(name=role_name)
@@ -88,8 +88,8 @@ async def remove_user_role(
     APP_EVENTS.emit(
         "admin:role_revoked",
         **{
-            "revoked_by": admin_id,
-            "target_user_id": user_id,
+            "revoked_by": str(admin["id"]),
+            "target_user_id": str(user_id),
             "role_name": role_name,
         },
     )
