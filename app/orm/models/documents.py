@@ -55,6 +55,9 @@ class Chunk(models.Model):
     )
     created_at: datetime = fields.DatetimeField(auto_now_add=True)
 
+    # Extras: From Annnotations
+    score: float
+
     class Meta(models.Model.Meta):
         """Chunk Meta."""
 

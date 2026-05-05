@@ -9,7 +9,6 @@ class CreateConversationSchema(BaseModel):
     """Create Conversation Schema."""
 
     title: String | None = Field(None, max_length=200)
-    document_id: UUID | None = None
 
 
 class SendMessageSchema(BaseModel):

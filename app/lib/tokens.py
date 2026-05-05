@@ -12,7 +12,8 @@ def generate_access_token(user_id: str, user_tier: str) -> str:
             "sub": user_id,
             "role": user_tier,
             "type": "access",
-            "exp": datetime.now(UTC) + timedelta(minutes=15),
+            "exp": datetime.now(UTC)
+            + timedelta(minutes=180),  # TODO: Change to 15 minutes in production
         },
         key=settings.JWT_ACCESS_SECRET,
         algorithm="HS256",

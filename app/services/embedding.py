@@ -10,7 +10,7 @@ from app.lib.logging import logger
 from app.lib.metrics import embedding_cache_hit_rate
 from app.lib.http.openai_breaker import call_openai
 
-EMBEDDING_MODEL = "embeddinggemma"
+EMBEDDING_MODEL = "phi4-mini"
 EMBEDDING_DIMENSIONS = 1536
 
 
@@ -22,11 +22,12 @@ async def generate_embedding(text: str) -> list[float]:
         "/embed",
         model=EMBEDDING_MODEL,
         input=text,
+        dimensions=EMBEDDING_DIMENSIONS,
     )
 
     data = response.json()
 
-    embedding = data[0]["embedding"]
+    embedding = data["embeddings"][0]
     duration = (datetime.now(UTC) - start_time).total_seconds()
 
     logger.info(
@@ -57,6 +58,7 @@ async def generate_embeddings(texts: list[str]) -> list[list[float]]:
             "/embed",
             model=EMBEDDING_MODEL,
             input=batch,
+            dimensions=EMBEDDING_DIMENSIONS,
         )
 
         data = response.json()

@@ -24,6 +24,9 @@ class Conversation(models.Model):
         "main.Message", on_delete=fields.SET_NULL, null=True
     )
 
+    # Typing for annotations
+    message_count: int
+
 
 class Message(models.Model):
     """Message Model."""

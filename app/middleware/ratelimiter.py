@@ -108,7 +108,7 @@ api_limiter = RateLimiter(
 
 upload_limiter = RateLimiter(
     window_sec=60 * 60,  # 1 hour
-    tiers={"free": 5, "pro": 50, "enterprise": 500},
+    tiers={"free": 50, "pro": 50, "enterprise": 500},
     message="Upload limit reached. Please try again later.",
 )
 

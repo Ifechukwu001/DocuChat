@@ -20,27 +20,35 @@ async def list_conversations(
 
 
 @router.post("", dependencies=[Depends(chat_limiter)])
-async def create_conversation(details: CreateConversationSchema) -> dict[str, object]:
+async def create_conversation(
+    user: Annotated[UserInfo, Depends(authenticate)], details: CreateConversationSchema
+) -> dict[str, object]:
     """Create a new conversation."""
-    return {}
+    return await conversation_service.create_conversation(
+        user_id=user["id"], title=details.title or "New Conversation"
+    )
 
 
 @router.get("/{id}/messages")
-async def get_conversation_messages(id: UUID) -> dict[str, object]:
+async def get_conversation_messages(
+    id: UUID, user: Annotated[UserInfo, Depends(authenticate)]
+) -> dict[str, object]:
     """Get conversation messages."""
-    return {}
+    return await conversation_service.get_conversation_messages(
+        user_id=user["id"], conversation_id=id
+    )
 
 
 @router.post("/{id}/messages", dependencies=[Depends(chat_limiter)])
 async def create_conversation_message(
     id: UUID,
-    user_id: Annotated[UUID, Depends(authenticate)],
+    user: Annotated[UserInfo, Depends(authenticate)],
     details: SendMessageSchema,
 ) -> dict[str, object]:
     """Create a new message in a conversation."""
     return await conversation_service.send_message(
         conversation_id=id,
-        user_id=user_id,
+        user_id=user["id"],
         content=details.content,
         document_id=details.document_id,
     )
