@@ -10,8 +10,8 @@ from app.lib.logging import logger
 from app.lib.metrics import embedding_cache_hit_rate
 from app.lib.http.openai_breaker import call_openai
 
-EMBEDDING_MODEL = "phi4-mini"
-EMBEDDING_DIMENSIONS = 1536
+EMBEDDING_MODEL = "nomic-embed-text"
+EMBEDDING_DIMENSIONS = 768
 
 
 async def generate_embedding(text: str) -> list[float]:

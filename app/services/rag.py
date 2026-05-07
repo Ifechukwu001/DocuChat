@@ -104,7 +104,7 @@ class Conversation(TypedDict):
     content: str
 
 
-CHAT_MODEL = "phi4-mini"
+CHAT_MODEL = "gemma2"
 
 
 async def generate_rag_response(

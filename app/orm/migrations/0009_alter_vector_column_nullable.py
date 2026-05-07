@@ -11,6 +11,6 @@ class Migration(migrations.Migration):
         ops.AlterField(
             model_name='Chunk',
             name='embedding',
-            field=VectorField(vector_size=1536,null=True),
+            field=VectorField(vector_size=768,null=True),
         ),
     ]

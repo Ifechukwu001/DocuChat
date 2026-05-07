@@ -51,7 +51,7 @@ class TraceStep(TypedDict):
 
 DEFAULT_CONFIG: AgentConfig = {
     "max_iterations": 10,
-    "timeout_secs": 1800,
+    "timeout_secs": 900,
     "cost_ceiling_usd": 0.50,
     "model": "qwen2.5",
 }

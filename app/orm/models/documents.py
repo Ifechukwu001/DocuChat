@@ -50,7 +50,7 @@ class Chunk(models.Model):
     content: str = fields.TextField()
     token_count: int = fields.IntField()
     embedding: list[float] = VectorField(
-        vector_size=1536,  # Vector embedding — 1536
+        vector_size=768,  # Vector embedding — 768 dimensions
         null=True,
     )
     created_at: datetime = fields.DatetimeField(auto_now_add=True)
