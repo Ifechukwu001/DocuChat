@@ -1,13 +1,12 @@
 from uuid import UUID
 from datetime import UTC, datetime
 
-from tortoise.expressions import F
-from tortoise_vector.expression import CosineSimilarity
+from tortoise.expressions import RawSQL
 
 from app.orm.models import Chunk
 from app.lib.logging import logger
 
-from .embedding import EMBEDDING_DIMENSIONS, generate_embedding_cached
+from .embedding import generate_embedding_cached
 
 
 async def semantic_search(
@@ -23,9 +22,11 @@ async def semantic_search(
 
     # Step 1: Embed the query
     query_embedding = await generate_embedding_cached(query)
+    vector_str = f"'[{','.join(str(x) for x in query_embedding)}]'"
 
     # Step 2: Search pgvector with ownership filter
     orm_query = Chunk.filter(document_id=document_id) if document_id else Chunk.filter()
+
     results = (
         await orm_query.filter(
             document__user_id=user_id,
@@ -34,10 +35,8 @@ async def semantic_search(
             embedding__isnull=False,
         )
         .annotate(
-            similarity=CosineSimilarity(
-                "embedding", query_embedding, EMBEDDING_DIMENSIONS
-            ),
-            score=1 - F("similarity"),
+            similarity=RawSQL(f"chunk.embedding <=> {vector_str}::vector"),
+            score=RawSQL(f"1 - (chunk.embedding <=> {vector_str}::vector)"),
         )
         .order_by("similarity")
         .limit(top_k)

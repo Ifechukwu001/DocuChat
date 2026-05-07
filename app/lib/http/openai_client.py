@@ -34,7 +34,7 @@ async def ratlimit_requests(response: httpx.Response) -> None:
 
 openai_client = httpx.AsyncClient(
     base_url="http://localhost:11434/api",
-    timeout=300,
+    timeout=900,  # 15 minutes timeout for long-running operations
     headers={
         "Content-Type": "application/json",
         "User-Agent": "DocuChat/1.0",
