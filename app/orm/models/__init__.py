@@ -1,3 +1,4 @@
+from .agent import AIAuditLog, PromptTemplate
 from .users import Role, User, UserRole, Permission, RefreshToken, RolePermission
 from .webhook import WebhookEvent
 from .documents import Chunk, Document
@@ -13,9 +14,11 @@ __models__: list[type] = [
     Document,
     UsageLog,
     UserRole,
+    AIAuditLog,
     Permission,
     WebhookEvent,
     Conversation,
     RefreshToken,
+    PromptTemplate,
     RolePermission,
 ]

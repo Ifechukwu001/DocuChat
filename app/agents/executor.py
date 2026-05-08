@@ -6,9 +6,9 @@ from datetime import UTC, datetime
 from app.lib.events import APP_EVENTS
 from app.lib.logging import logger
 from app.events.agent import AgentEvents
+from app.services.mcp import mcp_complete
 from app.config.prompts import AGENT_SYSTEM_PROMPT
 from app.agents.tools.registry import TOOL_REGISTRY, get_tool_schemas
-from app.lib.http.openai_breaker import call_openai
 
 
 class AgentConfig(TypedDict, total=False):
@@ -142,25 +142,23 @@ async def run_agent(
         step_start = datetime.now(UTC)
 
         # ── THINK: Ask the model what to do ──
-        response = await call_openai(
-            "/chat",
-            model=config.get("model", "qwen2.5"),
-            messages=messages,
-            tools=tool_schemas,
-            stream=False,
-            options={"temperature": 0.1},
+        response = await mcp_complete(
+            {
+                "correlation_id": correlation_id or "",
+                "user_id": user_id,
+                "max_tokens": 1500,
+                "messages": [
+                    {"role": m["role"], "content": m["content"]} for m in messages
+                ],
+                "task_type": "agent",
+                "system_prompt": AGENT_SYSTEM_PROMPT,
+                "temperature": 0.1,
+                "tools": tool_schemas,
+            }
         )
 
-        logger.critical(
-            "Agent model response",
-            correlation_id=correlation_id,
-            iteration=iteration,
-            response=response.text,
-        )
-
-        data = response.json()
-        prompt_tokens = data["prompt_eval_count"]
-        completion_tokens = data["eval_count"]
+        prompt_tokens = response["tokens_used"]["prompt"]
+        completion_tokens = response["tokens_used"]["completion"]
 
         step_cost = (
             (prompt_tokens / 1_000_000) * 2.50  # Input cost
@@ -169,23 +167,20 @@ async def run_agent(
         total_cost_usd += step_cost
 
         assistant_message = {
-            "role": data["message"]["role"],
-            "content": data["message"]["content"],
+            "role": "assistant",
+            "content": response["content"],
         }
 
         # Add the assistant's response to conversation
         messages.append(assistant_message)
 
         # ── NO TOOL CALL: Model wants to respond directly ──
-        if (
-            "tool_calls" not in data["message"]
-            or len(data["message"]["tool_calls"]) == 0
-        ):
+        if "tool_calls" not in response or len(response["tool_calls"]) == 0:
             trace.append(
                 {
                     "step": iteration,
                     "phase": "think",
-                    "output": data["message"]["content"],
+                    "output": response["content"],
                     "duration_secs": (datetime.now(UTC) - step_start).total_seconds(),
                     "cost_usd": step_cost,
                 }
@@ -193,7 +188,7 @@ async def run_agent(
 
             # Treat direct response as final answer
             b_result: AgentResult = {
-                "answer": data["message"]["content"],
+                "answer": response["content"],
                 "sources": [],
                 "confidence": "medium",
                 "iterations": iteration,
@@ -216,7 +211,7 @@ async def run_agent(
             return b_result
 
         # ── ACT: Execute each tool call ──
-        for tool_call in data["message"]["tool_calls"]:
+        for tool_call in response.get("tool_calls", []):
             tool_id = tool_call["id"]
             tool_name = tool_call["function"]["name"]
             tool_args = tool_call["function"]["arguments"]

@@ -5,6 +5,8 @@ from tortoise import fields, models
 
 
 class WebhookEvent(models.Model):
+    """Webhook Event Model."""
+
     id: str = fields.CharField(primary_key=True, max_length=255)
     provider: str = fields.CharField(max_length=50)
     event_type: str = fields.CharField(max_length=255)
@@ -13,4 +15,6 @@ class WebhookEvent(models.Model):
     payload: str = fields.CharField(max_length=5000)
 
     class Meta(models.Model.Meta):
+        """Webhook Event Meta."""
+
         indexes = (("provider", "event_type"),)

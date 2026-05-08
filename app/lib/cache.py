@@ -103,3 +103,15 @@ async def cache_get_or_set[T](
         return retried
 
     return await fetch_func()
+
+
+async def cache_incr_float(key: str, amount: float) -> None:
+    """Increment a float value in the cache."""
+    prefixed_key = prefix_key(key)
+    await cache_redis.incrbyfloat(prefixed_key, amount)
+
+
+async def cache_expire(key: str, ttl_seconds: int) -> None:
+    """Set a TTL on a cache key."""
+    prefixed_key = prefix_key(key)
+    await cache_redis.expire(prefixed_key, ttl_seconds)

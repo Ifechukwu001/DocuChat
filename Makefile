@@ -48,3 +48,7 @@ shell:
 .PHONY: seed-roles
 seed-roles:
 	@python3 -m app.orm.seeds.permission_roles
+
+.PHONY: seed-prompts
+seed-prompts:
+	@python3 -m app.orm.seeds.prompt_templates

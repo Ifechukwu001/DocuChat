@@ -22,6 +22,9 @@ class UsageLog(models.Model):
     created_at: datetime = fields.DatetimeField(auto_now_add=True)
     updated_at: datetime = fields.DatetimeField(auto_now=True)
 
+    # Annotations for type checking
+    total_cost: float
+
     class Meta(models.Model.Meta):
         """Usage Log Meta."""
 

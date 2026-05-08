@@ -5,8 +5,8 @@ from datetime import UTC, datetime
 from app.lib.events import APP_EVENTS
 from app.orm.models import Chunk
 from app.lib.logging import logger
+from app.services.mcp import mcp_complete
 from app.config.prompts import RAG_SYSTEM_PROMPT
-from app.lib.http.openai_breaker import call_openai
 
 
 class AssembledContext(TypedDict):
@@ -158,21 +158,23 @@ async def generate_rag_response(
     start_time = datetime.now(UTC)
 
     # Call the LLM through the circuit breaker
-    response = await call_openai(
-        "/chat",
-        model=CHAT_MODEL,
-        messages=messages,
-        stream=False,
-        options={
-            "temperature": 0.1,  # Low temperature for factual answers
-            "num_predict": 1500,  # Max tokens in the answer
-        },
+    response = await mcp_complete(
+        {
+            "correlation_id": correlation_id or "",
+            "user_id": user_id,
+            "max_tokens": 1500,
+            "messages": [
+                {"role": m["role"], "content": m["content"]} for m in messages
+            ],
+            "task_type": "chat",
+            "system_prompt": RAG_SYSTEM_PROMPT,
+            "temperature": 0.1,
+        }
     )
 
-    result = response.json()
-    answer = result["message"]["content"]
-    prompt_tokens = result["prompt_eval_count"]
-    completion_tokens = result["eval_count"]
+    answer = response["content"]
+    prompt_tokens = response["tokens_used"]["prompt"]
+    completion_tokens = response["tokens_used"]["completion"]
     duration = (datetime.now(UTC) - start_time).total_seconds()
 
     # Calculate Cost (assuming for phi4-mini)
