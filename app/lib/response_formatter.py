@@ -1,4 +1,4 @@
-from typing import Any, TypedDict
+from typing import Any, Never, TypedDict
 
 from app.lib.exceptions import ErrorResponse
 
@@ -35,7 +35,7 @@ def paginated_success_response(
     }
 
 
-def error_response(status_code: int, message: str) -> dict[str, Any]:
+def error_response(status_code: int, message: str) -> Never:
     """Response for failure responses.
 
     Raises:

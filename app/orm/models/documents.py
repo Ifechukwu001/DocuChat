@@ -33,6 +33,9 @@ class Document(models.Model):
     )
     deleted_by: UUID | None = fields.UUIDField(null=True)  # Who deleted it (for audit)
 
+    # Annotations
+    user_id: UUID
+
     class Meta(models.Model.Meta):
         """Document Meta."""
 

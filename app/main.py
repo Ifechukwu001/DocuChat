@@ -6,10 +6,12 @@ from secure import Secure, ContentSecurityPolicy
 from fastapi import FastAPI, Request, Response
 from prometheus_client import make_asgi_app  # type: ignore
 from fastapi.middleware.cors import CORSMiddleware
+from fastmcp.utilities.lifespan import combine_lifespans
 
 from app import __version__, __description__, __display_name__
 from app.env import settings
 from app.routes import router as api_router
+from app.mcp.server import mcp_server
 from app.orm.config import register_orm
 from app.middleware.metrics import MetricsMiddleware
 from app.middleware.request_logger import RequestLoggerMiddleware
@@ -28,8 +30,10 @@ async def _lifespan(api: FastAPI) -> AsyncIterator[None]:
         yield
 
 
+mcp_application = mcp_server.http_app(path="/mcp")
+
 application = FastAPI(
-    lifespan=_lifespan,
+    lifespan=combine_lifespans(_lifespan, mcp_application.lifespan),
     version=__version__,
     title=__display_name__,
     description=__description__,
@@ -37,6 +41,7 @@ application = FastAPI(
     openapi_url="/api-docs.json",
 )
 
+application.mount("/mcp", mcp_application)
 
 secure_headers = Secure.with_default_headers()
 docs_secure_headers = Secure(
