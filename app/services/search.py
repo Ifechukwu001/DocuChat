@@ -22,26 +22,10 @@ async def semantic_search(
 
     # Step 1: Embed the query
     query_embedding = await generate_embedding_cached(query)
-    vector_str = f"'[{','.join(str(x) for x in query_embedding)}]'"
 
     # Step 2: Search pgvector with ownership filter
-    orm_query = Chunk.filter(document_id=document_id) if document_id else Chunk.filter()
-
-    results = (
-        await orm_query.filter(
-            document__user_id=user_id,
-            document__deleted_at__isnull=True,
-            document__status="ready",
-            embedding__isnull=False,
-        )
-        .annotate(
-            similarity=RawSQL(f"chunk.embedding <=> {vector_str}::vector"),
-            score=RawSQL(f"1 - (chunk.embedding <=> {vector_str}::vector)"),
-        )
-        .order_by("similarity")
-        .limit(top_k)
-        .prefetch_related("document")
-        .all()
+    results = await retrieve_chunks(
+        embedding=query_embedding, document_id=document_id, user_id=user_id, top_k=top_k
     )
 
     filtered = [chunk for chunk in results if chunk.score >= min_score]
@@ -59,3 +43,33 @@ async def semantic_search(
     )
 
     return filtered
+
+
+async def retrieve_chunks(
+    embedding: list[float],
+    document_id: UUID | None = None,
+    user_id: UUID | None = None,
+    top_k: int = 5,
+) -> list[Chunk]:
+    """Retrieve chunks based on a provided embedding, with optional filters for document and user ownership."""
+    vector_str = f"'[{','.join(str(x) for x in embedding)}]'"
+
+    # Step 2: Search pgvector with ownership filter
+    orm_query = Chunk.filter(document_id=document_id) if document_id else Chunk.filter()
+    orm_query = orm_query.filter(document__user_id=user_id) if user_id else orm_query
+
+    return (
+        await orm_query.filter(
+            document__deleted_at__isnull=True,
+            document__status="ready",
+            embedding__isnull=False,
+        )
+        .annotate(
+            similarity=RawSQL(f"chunk.embedding <=> {vector_str}::vector"),
+            score=RawSQL(f"1 - (chunk.embedding <=> {vector_str}::vector)"),
+        )
+        .order_by("similarity")
+        .limit(top_k)
+        .prefetch_related("document")
+        .all()
+    )

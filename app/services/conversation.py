@@ -5,7 +5,10 @@ from typing import Any
 from tortoise import transactions
 from tortoise.functions import Count
 
+from app.main import settings
 from app.orm.models import Message, Document, UsageLog, Conversation
+from app.services.confidence import compute_confidence
+from app.services.review_queue import ReviewQueueService
 from app.lib.response_formatter import (
     error_response,
     success_response,
@@ -100,7 +103,7 @@ async def send_message(
     conversation_id: UUID,
     user_id: UUID,
     content: str,
-    document_id: UUID | None = None,
+    document_id: UUID,
     correlation_id: str | None = None,
 ) -> dict[str, Any]:
     """Send a message in a conversation."""
@@ -142,10 +145,16 @@ async def send_message(
             query=content, user_id=user_id, document_id=document_id
         )
 
+        # NEW. Compute confidence before calling the LLM
+        confidence = compute_confidence(
+            search_results, settings.HITL_CONFIDENCE_THRESHOLD
+        )
+
         # 5. RAG: Augment
         context = assemble_context(search_results)
 
         # 6. RAG: Generate
+        # NEW:  Call the LLM regardless — we need the answer even if it goes to review (reviewers need to see it)
         rag_response = await generate_rag_response(
             question=content,
             context=context,
@@ -180,20 +189,41 @@ async def send_message(
             cost_usd=rag_response["cost_usd"],
         )
 
+        # NEW: Route based on confidence
+        if confidence["should_escalate"] and settings.HITL_ESCALATION_ENABLED:
+            await ReviewQueueService.enqueue(
+                message_id=assistant_message.id,
+                document_id=document_id,
+                question=content,
+                generated_answer=rag_response["answer"],
+                confidence=confidence["score"],
+                sources=[
+                    {"index": citation["index"], "text": citation["document_title"]}
+                    for citation in rag_response["citations"]
+                ],
+                reason=confidence.get("reason"),
+            )
+
+            return success_response(
+                message="Message sent successfully",
+                data={
+                    "message_id": assistant_message.id,
+                    "status": "under_review",
+                    "message": "This answer is being reviewed for accuracy. You will be notified when the review is complete.",
+                    "confidence": confidence["score"],
+                    "conversation_id": conversation.id,
+                },
+            )
+
         return success_response(
             message="Message sent successfully",
             data={
+                "message_id": assistant_message.id,
+                "question": content,
+                "answer": rag_response["answer"],
+                "sources": rag_response["citations"],
+                "confidence": confidence["score"],
+                "usage": rag_response["tokens_used"]["total"],
                 "conversation_id": conversation.id,
-                "user_message": {
-                    "id": user_message.id,
-                    "content": user_message.content,
-                    "created_at": user_message.created_at,
-                },
-                "assistant_message": {
-                    "id": assistant_message.id,
-                    "content": assistant_message.content,
-                    "citations": rag_response["citations"],
-                    "created_at": assistant_message.created_at,
-                },
             },
         )

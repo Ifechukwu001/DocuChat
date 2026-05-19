@@ -27,5 +27,10 @@ class EnvSettings(BaseSettings):
 
     EXAMPLE_WEBHOOK_SECRET: str = ""
 
+    HITL_CONFIDENCE_THRESHOLD: float = 0.6
+    HITL_ESCALATION_ENABLED: bool = True
+    HITL_REVIEW_MAX_QUEUE_SIZE: int = 100
+    HITL_SLA_MINUTES: int = 60
+
 
 settings = EnvSettings()

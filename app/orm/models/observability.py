@@ -36,7 +36,7 @@ class AITrace(models.Model):
 
     id: UUID = fields.UUIDField(primary_key=True)
     trace_id: str = fields.CharField(max_length=255, unique=True)
-    user_id: UUID = fields.UUIDField(null=True)
+    user_id: UUID | None = fields.UUIDField(null=True)
     operation: str = fields.CharField(max_length=100)
     data: str = fields.TextField(null=True)  # JSON string
     created_at: datetime = fields.DatetimeField(auto_now_add=True)

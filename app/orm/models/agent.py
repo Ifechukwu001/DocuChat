@@ -4,6 +4,12 @@ from datetime import datetime
 
 from tortoise import fields, models
 
+from app.orm.enums.review_queue import ReviewStatus, ReviewPriority
+
+from .users import User
+from .documents import Document
+from .conversations import Message
+
 
 class PromptTemplate(models.Model):
     """Prompt Template Model."""
@@ -55,4 +61,49 @@ class AIAuditLog(models.Model):
             ("user_id", "created_at"),
             ("task_type", "created_at"),
             ("model", "created_at"),
+        )
+
+
+class ReviewQueue(models.Model):
+    """HITL Review Queue Model."""
+
+    id: UUID = fields.UUIDField(primary_key=True)
+    message: fields.ForeignKeyRelation[Message] = fields.ForeignKeyField(
+        "main.Message", unique=True
+    )
+    document: fields.ForeignKeyRelation[Document] = fields.ForeignKeyField(
+        "main.Document"
+    )
+    question: str = fields.TextField()
+    generated_answer: str = fields.TextField()
+    confidence: float = fields.FloatField()
+    sources = fields.JSONField()
+    reason: str | None = fields.CharField(max_length=255, null=True)
+    status: ReviewStatus = fields.CharEnumField(
+        ReviewStatus, default=ReviewStatus.PENDING
+    )
+    priority: ReviewPriority = fields.CharEnumField(
+        ReviewPriority, default=ReviewPriority.NORMAL
+    )
+    reviewer: fields.ForeignKeyNullableRelation[User] = fields.ForeignKeyField(
+        "main.User", source_field="reviewed_by", on_delete=fields.SET_NULL, null=True
+    )
+    edited_answer: str | None = fields.TextField(null=True)
+    reviewer_notes: str | None = fields.TextField(null=True)
+    reviewed_at: datetime | None = fields.DatetimeField(null=True)
+    escalated_at: datetime | None = fields.DatetimeField(null=True)
+    sla_deadline: datetime = fields.DatetimeField()
+    created_at: datetime = fields.DatetimeField(auto_now_add=True)
+
+    # Annotation
+    message_id: UUID
+    reviewed_by: UUID | None
+
+    class Meta(models.Model.Meta):
+        """Review Queue Meta."""
+
+        indexes = (
+            ("status", "priority", "created_at"),
+            ("reviewed_by",),
+            ("sla_deadline",),
         )
